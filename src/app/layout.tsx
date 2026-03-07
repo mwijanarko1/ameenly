@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
+import Providers from "./providers";
 
 // Initialize the Geist font with Latin subset
 const geistSans = Geist({
@@ -24,23 +26,23 @@ export const viewport: Viewport = {
 // Define metadata for better SEO
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"),
-  title: "Next.js Beginner Template",
-  description: "A beginner-friendly Next.js template with TailwindCSS and TypeScript",
-  keywords: ["Next.js", "React", "TailwindCSS", "TypeScript", "Template"],
+  title: "Ameenly — Share duas, receive duas",
+  description: "Submit duas and make duas for others. Ramadan is the month of dua.",
+  keywords: ["dua", "Ramadan", "prayer", "Islamic", "Ameenly"],
   authors: [{ name: "Created with Cursor Agent" }],
   creator: "Cursor Agent",
   publisher: "Cursor Agent",
   openGraph: {
-    title: "Next.js Beginner Template",
-    description: "A beginner-friendly Next.js template with TailwindCSS and TypeScript",
+    title: "Ameenly — Share duas, receive duas",
+    description: "Submit duas and make duas for others. Ramadan is the month of dua.",
     url: "https://nextjs.org/",
-    siteName: "Next.js Beginner Template",
+    siteName: "Ameenly",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Next.js Beginner Template",
+        alt: "Ameenly",
       },
     ],
     locale: "en_US",
@@ -48,8 +50,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Next.js Beginner Template",
-    description: "A beginner-friendly Next.js template with TailwindCSS and TypeScript",
+    title: "Ameenly — Share duas, receive duas",
+    description: "Submit duas and make duas for others. Ramadan is the month of dua.",
     images: ["/og-image.png"],
   },
   robots: {
@@ -68,13 +70,17 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100`}
       >
-        <a
-          href="#main-content"
-          className="absolute -top-12 left-4 z-50 px-4 py-2 bg-indigo-600 text-white rounded-md transition-[top] duration-200 focus:top-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-        >
-          Skip to main content
-        </a>
-        {children}
+        <ClerkProvider>
+          <Providers>
+            <a
+              href="#main-content"
+              className="absolute -top-12 left-4 z-50 px-4 py-2 bg-emerald-700 text-white rounded-md transition-[top] duration-200 focus:top-4 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+            >
+              Skip to main content
+            </a>
+            {children}
+          </Providers>
+        </ClerkProvider>
       </body>
     </html>
   );

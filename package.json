@@ -1,5 +1,5 @@
 {
-  "name": "mikhail-builds-website-template-for-beginners",
+  "name": "ameenly",
   "version": "2.0.3",
   "private": true,
   "scripts": {
@@ -11,11 +11,15 @@
     "test:run": "vitest run"
   },
   "dependencies": {
+    "@clerk/nextjs": "^7.0.1",
     "@tailwindcss/postcss": "^4.2.1",
-    "zod": "^3.24.1",
+    "convex": "^1.32.0",
+    "nanoid": "^5.1.6",
     "next": "^16.1.6",
     "react": "^19.2.4",
-    "react-dom": "^19.2.4"
+    "react-dom": "^19.2.4",
+    "svix": "^1.86.0",
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.4",
