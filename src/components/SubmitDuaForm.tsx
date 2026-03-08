@@ -5,7 +5,10 @@ import { useUser } from "@clerk/nextjs";
 import { useMutation } from "convex/react";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
-import { submitPublicDua } from "@/app/actions/duas";
+import {
+  submitPublicDua,
+  type SubmitPublicDuaResult,
+} from "@/app/actions/duas";
 
 type SubmitDuaFormProps =
   | {
@@ -16,6 +19,11 @@ type SubmitDuaFormProps =
     groupId: Id<"groups">;
   };
 
+type SubmissionStatus = Extract<
+  SubmitPublicDuaResult,
+  { status: "published" | "queued_for_review" }
+>["status"];
+
 export function SubmitDuaForm(props: SubmitDuaFormProps) {
   const { isSignedIn, user } = useUser();
   const [text, setText] = useState("");
@@ -23,6 +31,7 @@ export function SubmitDuaForm(props: SubmitDuaFormProps) {
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [submissionStatus, setSubmissionStatus] = useState<SubmissionStatus | null>(null);
 
   const submitGroupDua = useMutation(api.groupDuas.submitGroupDua);
   const displayName =
@@ -35,6 +44,7 @@ export function SubmitDuaForm(props: SubmitDuaFormProps) {
     e.preventDefault();
     setError(null);
     setPending(true);
+    setSubmissionStatus(null);
 
     try {
       if (props.mode === "public") {
@@ -45,10 +55,11 @@ export function SubmitDuaForm(props: SubmitDuaFormProps) {
           formData.set("name", name.trim());
         }
         const result = await submitPublicDua(formData);
-        if (result.error) {
+        if ("error" in result) {
           setError(result.error);
           return;
         }
+        setSubmissionStatus(result.status);
       } else {
         await submitGroupDua({
           groupId: props.groupId,
@@ -169,6 +180,18 @@ export function SubmitDuaForm(props: SubmitDuaFormProps) {
           {error}
         </p>
       )}
+      {props.mode === "public" && submissionStatus ? (
+        <p
+          className="text-success"
+          style={{ fontSize: "0.8rem" }}
+          role="status"
+          aria-live="polite"
+        >
+          {submissionStatus === "published"
+            ? "Dua submitted. Swipe to see it on the wall."
+            : "Thanks, your submission is under review before it appears on the wall."}
+        </p>
+      ) : null}
       {props.mode === "public" ? (
         <p style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>
           Public wall submissions are visible to anyone. Guests can post 1 dua

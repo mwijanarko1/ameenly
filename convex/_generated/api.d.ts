@@ -8,11 +8,14 @@
  * @module
  */
 
+import type * as adminModeration from "../adminModeration.js";
 import type * as duas from "../duas.js";
 import type * as groupDuas from "../groupDuas.js";
 import type * as groups from "../groups.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_duaRateLimits from "../lib/duaRateLimits.js";
+import type * as lib_guestModeration from "../lib/guestModeration.js";
+import type * as lib_siteAdminAuth from "../lib/siteAdminAuth.js";
 import type * as seed from "../seed.js";
 import type * as users from "../users.js";
 
@@ -23,11 +26,14 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  adminModeration: typeof adminModeration;
   duas: typeof duas;
   groupDuas: typeof groupDuas;
   groups: typeof groups;
   "lib/auth": typeof lib_auth;
   "lib/duaRateLimits": typeof lib_duaRateLimits;
+  "lib/guestModeration": typeof lib_guestModeration;
+  "lib/siteAdminAuth": typeof lib_siteAdminAuth;
   seed: typeof seed;
   users: typeof users;
 }>;

@@ -12,6 +12,10 @@ import {
   enforceAuthenticatedDuaRateLimit,
   enforceGuestPublicDuaRateLimit,
 } from "./lib/duaRateLimits";
+import {
+  isVisibleOnPublicWall,
+  moderateGuestSubmission,
+} from "./lib/guestModeration";
 
 const publicDuaValidator = v.object({
   _id: v.id("duas"),
@@ -126,7 +130,11 @@ export const listPublicDuas = query({
       .order("desc")
       .paginate(args.paginationOpts);
 
-    let page = await enrichPublicDuasWithAuthors(ctx, result.page, user?._id);
+    const visibleDuas = result.page.filter((dua) =>
+      isVisibleOnPublicWall(dua.moderationStatus)
+    );
+
+    let page = await enrichPublicDuasWithAuthors(ctx, visibleDuas, user?._id);
 
     if (user) {
       const ameens = await ctx.db
@@ -151,7 +159,10 @@ export const submitGuestPublicDua = mutation({
     isAnonymous: v.boolean(),
     ipHash: v.string(),
   },
-  returns: v.id("duas"),
+  returns: v.object({
+    duaId: v.id("duas"),
+    status: v.union(v.literal("published"), v.literal("queued_for_review")),
+  }),
   handler: async (ctx, args) => {
     const trimmedText = normalizeDuaText(args.text);
     const trimmedName = normalizeOptionalName(args.name);
@@ -163,14 +174,33 @@ export const submitGuestPublicDua = mutation({
 
     await enforceGuestPublicDuaRateLimit(ctx, args.ipHash);
 
-    return await ctx.db.insert("duas", {
+    const moderation = moderateGuestSubmission({
+      text: trimmedText,
+      name: isAnonymous ? undefined : trimmedName,
+    });
+
+    const moderationStatus =
+      moderation.outcome === "review" ? "pending_review" : "approved";
+    const submissionStatus: "published" | "queued_for_review" =
+      moderationStatus === "pending_review"
+        ? "queued_for_review"
+        : "published";
+    const duaId = await ctx.db.insert("duas", {
       text: trimmedText,
       name: isAnonymous ? undefined : trimmedName,
       isAnonymous,
       ipHash: args.ipHash,
       createdAt: Date.now(),
       ameen: 0,
+      moderationStatus,
+      moderationReasons:
+        moderation.reasons.length > 0 ? moderation.reasons : undefined,
     });
+
+    return {
+      duaId,
+      status: submissionStatus,
+    };
   },
 });
 

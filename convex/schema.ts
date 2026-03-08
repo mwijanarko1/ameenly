@@ -8,6 +8,12 @@ export default defineSchema({
     email: v.optional(v.string()),
   }).index("by_clerkId", ["clerkId"]),
 
+  siteAdmins: defineTable({
+    clerkId: v.string(),
+    createdAt: v.number(),
+    note: v.optional(v.string()),
+  }).index("by_clerkId", ["clerkId"]),
+
   groups: defineTable({
     name: v.string(),
     description: v.optional(v.string()),
@@ -37,10 +43,21 @@ export default defineSchema({
     authorId: v.optional(v.id("users")),
     createdAt: v.number(),
     ameen: v.number(),
+    moderationStatus: v.optional(
+      v.union(
+        v.literal("approved"),
+        v.literal("pending_review"),
+        v.literal("rejected")
+      )
+    ),
+    moderationReasons: v.optional(v.array(v.string())),
+    moderatedAt: v.optional(v.number()),
+    moderatedByAdminId: v.optional(v.id("siteAdmins")),
   })
     .index("by_group_wall", ["groupId", "createdAt"])
     .index("by_ip_and_time", ["ipHash", "createdAt"])
-    .index("by_author_and_time", ["authorId", "createdAt"]),
+    .index("by_author_and_time", ["authorId", "createdAt"])
+    .index("by_moderation_status_and_time", ["moderationStatus", "createdAt"]),
 
   ameens: defineTable({
     duaId: v.id("duas"),

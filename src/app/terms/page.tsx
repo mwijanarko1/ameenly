@@ -66,6 +66,11 @@ export default function TermsPage() {
             Signed-in users can post up to 50 duas per hour and use private
             groups.
           </p>
+          <p style={{ color: "var(--text-secondary)" }}>
+            Guest public-wall submissions may be held for moderation review
+            before they are published if local abuse checks flag them for
+            further review.
+          </p>
         </div>
 
         <div className="glass-panel" style={sectionStyle}>

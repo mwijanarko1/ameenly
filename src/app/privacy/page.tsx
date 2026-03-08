@@ -86,6 +86,11 @@ export default function PrivacyPage() {
               prevention and rate limiting on public submissions.
             </li>
             <li>
+              Moderation status, matched abuse-rule categories, and reviewer
+              actions for guest public-wall submissions that are held for
+              review.
+            </li>
+            <li>
               Essential session, authentication, and synchronization data used
               by Clerk and Convex to keep the app working.
             </li>
@@ -113,6 +118,11 @@ export default function PrivacyPage() {
             local law applies, the legal bases are performance of a contract,
             legitimate interests in running a secure service, and your consent
             when you choose to submit content or contact us.
+          </p>
+          <p style={{ color: "var(--text-secondary)" }}>
+            Some guest public-wall submissions may be queued for manual review
+            before publication when local moderation rules detect abuse,
+            solicitation, explicit content, threats, or privacy risks.
           </p>
         </div>
 
@@ -170,6 +180,11 @@ export default function PrivacyPage() {
               Guest IP hashes used for public-wall rate limiting are retained
               only for the period needed to enforce the 24-hour guest submission
               limit.
+            </li>
+            <li>
+              Guest submissions held for moderation review, along with their
+              review metadata, may be retained for abuse prevention, audit, and
+              operator follow-up even if they are not published.
             </li>
             <li>
               Provider-side logs may be retained longer under Clerk, Convex, or

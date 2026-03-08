@@ -2,14 +2,10 @@
 
 import { useState } from "react";
 import { useUser } from "@clerk/nextjs";
-
-type SubmitDuaResult = {
-  error?: string;
-  success?: boolean;
-};
+import type { SubmitPublicDuaResult } from "@/app/actions/duas";
 
 type SubmitDuaCardClientProps = {
-  submitDua: (formData: FormData) => Promise<SubmitDuaResult>;
+  submitDua: (formData: FormData) => Promise<SubmitPublicDuaResult>;
 };
 
 export function SubmitDuaCardClient({ submitDua }: SubmitDuaCardClientProps) {
@@ -19,7 +15,9 @@ export function SubmitDuaCardClient({ submitDua }: SubmitDuaCardClientProps) {
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
+  const [submissionStatus, setSubmissionStatus] = useState<
+    "published" | "queued_for_review" | null
+  >(null);
   const profileName = user?.fullName?.trim() || user?.firstName?.trim() || "your profile";
   const shouldShowGuestNameField = !isAnonymous && !isSignedIn;
 
@@ -28,7 +26,7 @@ export function SubmitDuaCardClient({ submitDua }: SubmitDuaCardClientProps) {
     event.stopPropagation();
     setError(null);
     setIsPending(true);
-    setIsSuccess(false);
+    setSubmissionStatus(null);
 
     try {
       const formData = new FormData();
@@ -39,14 +37,14 @@ export function SubmitDuaCardClient({ submitDua }: SubmitDuaCardClientProps) {
       }
 
       const result = await submitDua(formData);
-      if (result.error) {
+      if ("error" in result) {
         setError(result.error);
         return;
       }
 
       setText("");
       setName("");
-      setIsSuccess(true);
+      setSubmissionStatus(result.status);
     } catch (submitError) {
       setError(
         submitError instanceof Error ? submitError.message : "Something went wrong"
@@ -60,6 +58,7 @@ export function SubmitDuaCardClient({ submitDua }: SubmitDuaCardClientProps) {
     setText("");
     setName("");
     setError(null);
+    setSubmissionStatus(null);
   }
 
   return (
@@ -177,13 +176,15 @@ export function SubmitDuaCardClient({ submitDua }: SubmitDuaCardClientProps) {
                 </p>
               ) : null}
 
-              {isSuccess ? (
+              {submissionStatus ? (
                 <p
                   className="text-success submit-dropdown-message"
                   role="status"
                   aria-live="polite"
                 >
-                  Dua submitted. Swipe to see it on the wall.
+                  {submissionStatus === "published"
+                    ? "Dua submitted. Swipe to see it on the wall."
+                    : "Thanks, your submission is under review before it appears on the wall."}
                 </p>
               ) : null}
 

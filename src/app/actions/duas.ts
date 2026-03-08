@@ -14,6 +14,11 @@ const submitPublicDuaSchema = z.object({
   isAnonymous: z.boolean(),
 });
 
+export type SubmitPublicDuaResult =
+  | { status: "published" }
+  | { status: "queued_for_review" }
+  | { error: string };
+
 async function getClientIp(): Promise<string> {
   const headersList = await headers();
   const forwarded = headersList.get("x-forwarded-for");
@@ -31,7 +36,9 @@ function hashIp(ip: string): string {
   return createHash("sha256").update(ip).digest("hex");
 }
 
-export async function submitPublicDua(formData: FormData) {
+export async function submitPublicDua(
+  formData: FormData
+): Promise<SubmitPublicDuaResult> {
   const parsed = submitPublicDuaSchema.safeParse({
     text: formData.get("text"),
     name: formData.get("name") || undefined,
@@ -73,20 +80,22 @@ export async function submitPublicDua(formData: FormData) {
           isAnonymous: parsed.data.isAnonymous,
         }
       );
+
+      return { status: "published" };
     } else {
       const ip = await getClientIp();
       const ipHash = hashIp(ip);
       const client = new ConvexHttpClient(convexUrl);
 
-      await client.mutation(api.duas.submitGuestPublicDua, {
+      const result = await client.mutation(api.duas.submitGuestPublicDua, {
         text: parsed.data.text,
         name: parsed.data.name || undefined,
         isAnonymous: parsed.data.isAnonymous,
         ipHash,
       });
-    }
 
-    return { success: true };
+      return { status: result.status };
+    }
   } catch (err) {
     const message = err instanceof Error ? err.message : "Something went wrong";
     if (message.includes("Rate limit")) {
