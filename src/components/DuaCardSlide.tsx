@@ -71,11 +71,13 @@ export function DuaCardSlide({ dua }: DuaCardSlideProps) {
     return (
         <article
             className="card-glass card-dua"
-            aria-label={`Dua from ${displayName}`}
+            aria-label={displayName ? `Dua from ${displayName}` : "Dua"}
         >
             <div className="dua-author">
                 <div>
-                    <p className="dua-name">{displayName}</p>
+                    {displayName ? (
+                        <p className="dua-name">{displayName}</p>
+                    ) : null}
                     <p className="dua-time">{formatTimeAgo(dua.createdAt)}</p>
                 </div>
             </div>

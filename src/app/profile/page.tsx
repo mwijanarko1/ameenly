@@ -541,9 +541,11 @@ function SignedInProfile() {
                       }}
                     >
                       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: "8px", marginBottom: "4px" }}>
-                        <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--text-accent)" }}>
-                          {displayName}
-                        </span>
+                        {displayName ? (
+                          <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--text-accent)" }}>
+                            {displayName}
+                          </span>
+                        ) : null}
                         <span style={{ fontSize: "0.72rem", color: "var(--text-secondary)", flexShrink: 0 }}>
                           {formatTimeAgo(dua.createdAt)}
                         </span>

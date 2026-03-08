@@ -1,14 +1,20 @@
 type DuaDisplayNameInput = {
   isAnonymous?: boolean;
+  isSeedDua?: boolean;
   authorName?: string;
   name?: string;
 };
 
 export function getDuaDisplayName({
   isAnonymous,
+  isSeedDua,
   authorName,
   name,
 }: DuaDisplayNameInput): string {
+  if (isSeedDua) {
+    return "";
+  }
+
   if (isAnonymous) {
     return "Anonymous";
   }

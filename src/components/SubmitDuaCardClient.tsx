@@ -154,7 +154,7 @@ export function SubmitDuaCardClient({ submitDua }: SubmitDuaCardClientProps) {
                         ? "Your name stays hidden on this dua."
                         : isSignedIn
                           ? `The public wall will show ${profileName}.`
-                          : "The public wall will show the name you enter below."}
+                          : "The public wall will show the name you entered above."}
                     </p>
                   </div>
                   <button

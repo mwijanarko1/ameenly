@@ -39,6 +39,7 @@ export default defineSchema({
     groupId: v.optional(v.id("groups")),
     name: v.optional(v.string()),
     isAnonymous: v.optional(v.boolean()),
+    isSeedDua: v.optional(v.boolean()),
     ipHash: v.optional(v.string()),
     authorId: v.optional(v.id("users")),
     createdAt: v.number(),

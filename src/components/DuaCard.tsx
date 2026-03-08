@@ -72,13 +72,15 @@ export function DuaCard({ dua, onDelete, canDelete }: DuaCardProps) {
   return (
     <article
       className="glass-panel px-6 py-5"
-      aria-label={`Dua from ${displayName}`}
+      aria-label={displayName ? `Dua from ${displayName}` : "Dua"}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
-          <p className="text-[0.85rem] font-semibold text-[var(--text-accent)]">
-            {displayName}
-          </p>
+          {displayName ? (
+            <p className="text-[0.85rem] font-semibold text-[var(--text-accent)]">
+              {displayName}
+            </p>
+          ) : null}
           <p className="mt-2 whitespace-pre-wrap leading-[1.6] text-[var(--text-primary)]">
             {dua.text}
           </p>
