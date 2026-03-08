@@ -36,8 +36,10 @@ function buildCsp() {
   const scriptSources = [
     "'self'",
     "'unsafe-inline'",
+    clerkOrigin,
     "https://*.clerk.accounts.dev",
     "https://*.clerk.dev",
+    "https://*.clerk.com",
     "https://challenges.cloudflare.com",
   ];
 
@@ -49,7 +51,7 @@ function buildCsp() {
     "default-src 'self'",
     `script-src ${scriptSources.join(" ")}`,
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: blob: https:",
+    "img-src 'self' data: blob: https: https://img.clerk.com",
     "font-src 'self' data:",
     `connect-src ${connectSources.join(" ")}`,
     `frame-src ${frameSources.join(" ")}`,
