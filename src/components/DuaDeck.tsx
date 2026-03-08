@@ -51,6 +51,7 @@ type DuaDeckProps =
   | {
       mode: "group";
       groupId: Id<"groups">;
+      onEmptySubmitClick?: () => void;
     };
 
 export function DuaDeck(props: DuaDeckProps) {
@@ -69,6 +70,41 @@ export function DuaDeck(props: DuaDeckProps) {
   const result = props.mode === "public" ? publicResult : groupResult;
   const duas = result.results;
   const canLoadMore = result.status === "CanLoadMore";
+
+  const isGroupEmpty = props.mode === "group" && duas.length === 0;
+
+  if (isGroupEmpty) {
+    return (
+      <div className="dua-deck-wrapper">
+        <div
+          className="glass-panel"
+          style={{
+            width: "100%",
+            textAlign: "center",
+            padding: "32px 40px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "16px",
+          }}
+        >
+          <p style={{ color: "var(--text-secondary)", fontSize: "1rem", margin: 0 }}>
+            No duas yet.
+          </p>
+          {props.onEmptySubmitClick && (
+            <button
+              type="button"
+              onClick={props.onEmptySubmitClick}
+              className="nav-btn"
+              style={{ padding: "12px 24px" }}
+            >
+              Submit a dua
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   const cards =
     props.mode === "public"

@@ -4,7 +4,6 @@ import "./globals.css";
 import Providers from "@/app/providers";
 import { getEnv } from "@/lib/env";
 import { FloatingTabBar } from "@/components/FloatingTabBar";
-import { SiteFooter } from "@/components/SiteFooter";
 
 const { NEXT_PUBLIC_APP_URL } = getEnv();
 const appUrl = NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
@@ -164,7 +163,6 @@ export default function RootLayout({
               style={{ position: "relative", zIndex: 1 }}
             >
               {children}
-              <SiteFooter />
             </div>
 
             <FloatingTabBar />

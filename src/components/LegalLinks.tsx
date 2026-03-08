@@ -43,24 +43,6 @@ export function LegalLinks() {
         <span>Privacy Policy</span>
         <LegalChevron />
       </Link>
-      <Link href="/privacy#us-privacy-rights" className="profile-legal-link">
-        <svg
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <path d="M12 2v20" />
-          <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H7" />
-        </svg>
-        <span>Privacy Choices</span>
-        <LegalChevron />
-      </Link>
       <Link href="/terms" className="profile-legal-link">
         <svg
           width="18"

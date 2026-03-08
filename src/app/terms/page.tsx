@@ -144,11 +144,6 @@ export default function TermsPage() {
             Operator: {legalConfig.legalEntityName}
           </p>
           <p style={{ color: "var(--text-secondary)" }}>
-            Postal address:{" "}
-            {legalConfig.postalAddress ??
-              "Set NEXT_PUBLIC_LEGAL_POSTAL_ADDRESS before production deployment."}
-          </p>
-          <p style={{ color: "var(--text-secondary)" }}>
             Support contact:{" "}
             <a href={legalConfig.supportHref}>
               {legalConfig.contactEmail ?? "Set NEXT_PUBLIC_CONTACT_EMAIL before production deployment."}

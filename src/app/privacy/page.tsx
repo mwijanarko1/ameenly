@@ -304,8 +304,7 @@ export default function PrivacyPage() {
             access, correct, or delete personal information and may contact{" "}
             <a href={legalConfig.privacyHref}>{legalConfig.privacyEmail ?? "the site operator"}</a>{" "}
             to exercise those rights. If sale or sharing behavior is added in
-            the future, this section and the footer privacy-choices link must be
-            updated before launch.
+            the future, this section must be updated before launch.
           </p>
         </div>
 
@@ -339,11 +338,6 @@ export default function PrivacyPage() {
           </h2>
           <p style={{ color: "var(--text-secondary)" }}>
             Legal entity: {legalConfig.legalEntityName}
-          </p>
-          <p style={{ color: "var(--text-secondary)" }}>
-            Postal address:{" "}
-            {legalConfig.postalAddress ??
-              "Set NEXT_PUBLIC_LEGAL_POSTAL_ADDRESS before production deployment."}
           </p>
           <p style={{ color: "var(--text-secondary)" }}>
             Privacy contact:{" "}

@@ -83,6 +83,7 @@ export default function GroupWallPage({ params, searchParams }: Props) {
         role="tablist"
         aria-label="Group view"
         style={{
+          position: "relative",
           display: "grid",
           gridTemplateColumns: "1fr 1fr",
           marginBottom: "24px",
@@ -106,12 +107,8 @@ export default function GroupWallPage({ params, searchParams }: Props) {
                 : "var(--text-secondary)",
             background: "none",
             border: "none",
-            borderBottom:
-              activeTab === "duas"
-                ? "2px solid var(--text-accent)"
-                : "2px solid transparent",
             cursor: "pointer",
-            transition: "color 0.15s, border-color 0.15s",
+            transition: "color 0.15s",
             marginBottom: "-1px",
           }}
         >
@@ -134,17 +131,26 @@ export default function GroupWallPage({ params, searchParams }: Props) {
                 : "var(--text-secondary)",
             background: "none",
             border: "none",
-            borderBottom:
-              activeTab === "submit"
-                ? "2px solid var(--text-accent)"
-                : "2px solid transparent",
             cursor: "pointer",
-            transition: "color 0.15s, border-color 0.15s",
+            transition: "color 0.15s",
             marginBottom: "-1px",
           }}
         >
           Submit
         </button>
+        <div
+          role="presentation"
+          aria-hidden
+          style={{
+            position: "absolute",
+            bottom: 0,
+            left: activeTab === "duas" ? 0 : "50%",
+            width: "50%",
+            height: 2,
+            backgroundColor: "var(--text-accent)",
+            transition: "left 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+          }}
+        />
       </div>
 
       {/* Tab Content */}
@@ -154,7 +160,11 @@ export default function GroupWallPage({ params, searchParams }: Props) {
           role="tabpanel"
           aria-labelledby="group-duas-tab"
         >
-          <DuaDeck mode="group" groupId={groupId} />
+          <DuaDeck
+            mode="group"
+            groupId={groupId}
+            onEmptySubmitClick={() => setActiveTab("submit")}
+          />
         </div>
       )}
       {activeTab === "submit" && (
