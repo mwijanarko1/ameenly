@@ -3,6 +3,13 @@
 import Link from "next/link";
 import { usePaginatedQuery } from "convex/react";
 import { api } from "convex/_generated/api";
+import {
+  Show,
+  SignInButton,
+  SignUpButton,
+  UserButton,
+  useUser,
+} from "@clerk/nextjs";
 
 function formatTimeAgo(timestamp: number) {
   const diff = Date.now() - timestamp;
@@ -21,7 +28,168 @@ function formatTimeAgo(timestamp: number) {
   }).format(new Date(timestamp));
 }
 
-export default function ProfilePage() {
+function SignedOutProfile() {
+  return (
+    <main
+      id="main-content"
+      className="page-container"
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        minHeight: "70dvh",
+        paddingBottom: "120px",
+      }}
+    >
+      <div
+        style={{
+          width: "100%",
+          maxWidth: "400px",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: "32px",
+        }}
+      >
+        {/* ── Auth Prompt ── */}
+        <div className="glass-panel profile-auth-card">
+          <div className="profile-auth-icon" aria-hidden="true">
+            <svg
+              width="40"
+              height="40"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="12" cy="8" r="4" />
+              <path d="M5.5 21a7.5 7.5 0 0 1 13 0" />
+            </svg>
+          </div>
+          <h1
+            className="page-title"
+            style={{ textAlign: "center", marginBottom: "8px" }}
+          >
+            Welcome to Ameenly
+          </h1>
+          <p
+            style={{
+              color: "var(--text-secondary)",
+              fontSize: "0.9rem",
+              textAlign: "center",
+              maxWidth: "300px",
+              margin: "0 auto 24px",
+            }}
+          >
+            Sign in to track your duas, join private groups, and submit up to 50
+            duas per hour.
+          </p>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "12px",
+              width: "100%",
+            }}
+          >
+            <SignInButton mode="modal">
+              <button type="button" className="btn-primary">
+                Sign In
+              </button>
+            </SignInButton>
+            <SignUpButton mode="modal">
+              <button type="button" className="btn-secondary">
+                Create Account
+              </button>
+            </SignUpButton>
+          </div>
+        </div>
+
+        {/* ── Legal ── */}
+        <div className="profile-legal-section">
+          <h2 className="profile-legal-heading">Legal</h2>
+          <nav
+            aria-label="Legal"
+            style={{ display: "flex", flexDirection: "column", gap: "0" }}
+          >
+            <Link href="/privacy" className="profile-legal-link">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+              <span>Privacy Policy</span>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+                style={{ marginLeft: "auto", opacity: 0.4 }}
+              >
+                <path d="M9 18l6-6-6-6" />
+              </svg>
+            </Link>
+            <Link href="/terms" className="profile-legal-link">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <path d="M14 2v6h6" />
+                <line x1="16" y1="13" x2="8" y2="13" />
+                <line x1="16" y1="17" x2="8" y2="17" />
+                <line x1="10" y1="9" x2="8" y2="9" />
+              </svg>
+              <span>Terms of Use</span>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+                style={{ marginLeft: "auto", opacity: 0.4 }}
+              >
+                <path d="M9 18l6-6-6-6" />
+              </svg>
+            </Link>
+          </nav>
+        </div>
+
+      </div>
+    </main>
+  );
+}
+
+function SignedInProfile() {
+  const { user } = useUser();
   const result = usePaginatedQuery(
     api.duas.listMyDuas,
     {},
@@ -31,34 +199,67 @@ export default function ProfilePage() {
   const duas = result.results;
 
   return (
-    <main id="main-content" className="page-container">
+    <main id="main-content" className="page-container" style={{ paddingBottom: "120px" }}>
+      {/* ── Profile Header ── */}
       <div
         style={{
           display: "flex",
           alignItems: "center",
-          justifyContent: "space-between",
           gap: "16px",
           marginBottom: "32px",
+        }}
+      >
+        <UserButton
+          appearance={{
+            elements: { avatarBox: { width: 48, height: 48 } },
+          }}
+        />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <h1 className="page-title" style={{ marginBottom: "4px" }}>
+            {user?.firstName ?? "My Profile"}
+          </h1>
+          <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem" }}>
+            {user?.primaryEmailAddress?.emailAddress ?? ""}
+          </p>
+        </div>
+      </div>
+
+      {/* ── Quick Links ── */}
+      <div
+        style={{
+          display: "flex",
+          gap: "12px",
+          marginBottom: "28px",
           flexWrap: "wrap",
         }}
       >
-        <div>
-          <h1 className="page-title" style={{ marginBottom: "6px" }}>
-            My Duas
-          </h1>
-          <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem" }}>
-            Review your public and group dua submissions in one place.
-          </p>
-        </div>
-        <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
-          <Link href="/" className="top-bar-link">
-            Public Wall
-          </Link>
-          <Link href="/groups" className="top-bar-link">
-            My Groups
-          </Link>
-        </div>
+        <Link
+          href="/"
+          className="btn-ameen"
+          style={{ textDecoration: "none" }}
+        >
+          Public Wall
+        </Link>
+        <Link
+          href="/groups"
+          className="btn-ameen"
+          style={{ textDecoration: "none" }}
+        >
+          My Groups
+        </Link>
       </div>
+
+      {/* ── My Duas ── */}
+      <h2
+        style={{
+          fontSize: "1.1rem",
+          fontWeight: 600,
+          color: "var(--text-primary)",
+          marginBottom: "16px",
+        }}
+      >
+        My Duas
+      </h2>
 
       {duas.length === 0 && result.status === "LoadingFirstPage" ? (
         <div className="glass-panel" style={{ textAlign: "center" }}>
@@ -68,7 +269,7 @@ export default function ProfilePage() {
         <div className="empty-state">
           <p>You haven&apos;t submitted any duas yet.</p>
           <Link
-            href="/"
+            href="/submit"
             className="btn-ameen"
             style={{ display: "inline-block", textDecoration: "none" }}
           >
@@ -177,7 +378,13 @@ export default function ProfilePage() {
           })}
 
           {result.status === "CanLoadMore" ? (
-            <div style={{ display: "flex", justifyContent: "center", paddingTop: "8px" }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                paddingTop: "8px",
+              }}
+            >
               <button
                 type="button"
                 onClick={() => result.loadMore(10)}
@@ -201,6 +408,96 @@ export default function ProfilePage() {
           ) : null}
         </div>
       )}
+
+      {/* ── Legal + Footer ── */}
+      <div style={{ marginTop: "48px" }}>
+        <div className="profile-legal-section">
+          <h2 className="profile-legal-heading">Legal</h2>
+          <nav
+            aria-label="Legal"
+            style={{ display: "flex", flexDirection: "column", gap: "0" }}
+          >
+            <Link href="/privacy" className="profile-legal-link">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+              <span>Privacy Policy</span>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+                style={{ marginLeft: "auto", opacity: 0.4 }}
+              >
+                <path d="M9 18l6-6-6-6" />
+              </svg>
+            </Link>
+            <Link href="/terms" className="profile-legal-link">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <path d="M14 2v6h6" />
+                <line x1="16" y1="13" x2="8" y2="13" />
+                <line x1="16" y1="17" x2="8" y2="17" />
+                <line x1="10" y1="9" x2="8" y2="9" />
+              </svg>
+              <span>Terms of Use</span>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+                style={{ marginLeft: "auto", opacity: 0.4 }}
+              >
+                <path d="M9 18l6-6-6-6" />
+              </svg>
+            </Link>
+          </nav>
+        </div>
+      </div>
     </main>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <>
+      <Show when="signed-out">
+        <SignedOutProfile />
+      </Show>
+      <Show when="signed-in">
+        <SignedInProfile />
+      </Show>
+    </>
   );
 }

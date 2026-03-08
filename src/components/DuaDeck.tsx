@@ -4,18 +4,17 @@ import { usePaginatedQuery } from "convex/react";
 import { api } from "convex/_generated/api";
 import { SwipeCardDeck } from "@/components/SwipeCardDeck";
 import { DuaCardSlide } from "@/components/DuaCardSlide";
-import { SubmitDuaCard } from "@/components/SubmitDuaCard";
+
 
 function HeroCard() {
     return (
         <div className="card-glass card-hero">
-            <p className="bismillah">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</p>
+            <img src="/logo.png" alt="Ameenly" className="hero-logo" width={120} height={120} />
             <h1 className="brand">
                 Ameen<span className="brand-accent">ly</span>
             </h1>
             <p className="tagline">
-                Share duas. Make duas for others. The fasting person&apos;s dua
-                isn&apos;t rejected.
+                Share duas. Make duas for others.
             </p>
             <p className="subtitle">
                 Swipe through the public dua wall and say Ameen. Or submit your own dua
@@ -54,7 +53,6 @@ export function DuaDeck() {
 
     const cards = [
         <HeroCard key="hero" />,
-        <SubmitDuaCard key="submit" />,
         ...duas.map((dua) => <DuaCardSlide key={dua._id} dua={dua} />),
     ];
 
@@ -66,8 +64,11 @@ export function DuaDeck() {
     }
 
     return (
-        <SwipeCardDeck onCardChange={handleCardChange}>
-            {cards}
-        </SwipeCardDeck>
+        <div className="dua-deck-wrapper">
+            <SwipeCardDeck onCardChange={handleCardChange}>
+                {cards}
+            </SwipeCardDeck>
+
+        </div>
     );
 }

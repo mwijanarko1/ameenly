@@ -44,7 +44,7 @@ export function Hero() {
             maxWidth: "640px",
           }}
         >
-          Share duas. Make duas for others. The fasting person&apos;s dua isn&apos;t rejected.
+          Share duas. Make duas for others.
         </p>
         <p style={{ color: "var(--text-secondary)", maxWidth: "560px" }}>
           Submit your dua to the public wall or create a private group for family and friends.

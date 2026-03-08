@@ -26,6 +26,10 @@ export default function TermsPage() {
             Public wall posts are visible to anyone visiting the site. Do not post confidential information, medical
             details, or identifying information for other people without permission.
           </p>
+          <p style={{ color: "var(--text-secondary)" }}>
+            Guests can post 1 public dua every 24 hours by IP. Signed-in users can post up to 50 duas per hour and use
+            private groups.
+          </p>
         </div>
 
         <div className="glass-panel" style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
