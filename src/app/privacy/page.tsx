@@ -4,6 +4,9 @@ import { getLegalConfig } from "@/lib/legal";
 export const metadata = {
   title: "Privacy Policy | Ameenly",
   description: "Privacy information for Ameenly.",
+  alternates: {
+    canonical: "/privacy",
+  },
 };
 
 const legalConfig = getLegalConfig();
@@ -38,9 +41,13 @@ export default function PrivacyPage() {
           gap: "24px",
         }}
       >
-        <Link href="/" className="top-bar-link">
-          ← Back to Home
-        </Link>
+        <nav aria-label="Breadcrumb" className="breadcrumb">
+          <Link href="/">Home</Link>
+          <span className="breadcrumb-sep" aria-hidden="true">
+            ›
+          </span>
+          <span aria-current="page">Privacy Policy</span>
+        </nav>
         <header style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
           <h1 className="page-title" style={{ fontSize: "1.75rem" }}>
             Privacy Policy

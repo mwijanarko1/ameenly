@@ -4,6 +4,9 @@ import { getLegalConfig } from "@/lib/legal";
 export const metadata = {
   title: "Terms | Ameenly",
   description: "Terms of use for Ameenly.",
+  alternates: {
+    canonical: "/terms",
+  },
 };
 
 const legalConfig = getLegalConfig();
@@ -29,9 +32,13 @@ export default function TermsPage() {
           gap: "24px",
         }}
       >
-        <Link href="/" className="top-bar-link">
-          ← Back to Home
-        </Link>
+        <nav aria-label="Breadcrumb" className="breadcrumb">
+          <Link href="/">Home</Link>
+          <span className="breadcrumb-sep" aria-hidden="true">
+            ›
+          </span>
+          <span aria-current="page">Terms of Use</span>
+        </nav>
         <header style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
           <h1 className="page-title" style={{ fontSize: "1.75rem" }}>
             Terms of Use

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { usePaginatedQuery } from "convex/react";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
@@ -9,7 +10,14 @@ import { DuaCardSlide } from "@/components/DuaCardSlide";
 function HeroCard() {
   return (
     <div className="card-glass card-hero">
-      <img src="/logo.png" alt="Ameenly" className="hero-logo" width={120} height={120} />
+      <Image
+        src="/logo.png"
+        alt="Ameenly — The Online Dua Wall"
+        className="hero-logo"
+        width={120}
+        height={120}
+        priority
+      />
       <h1 className="brand">
         Ameen<span className="brand-accent">ly</span>
       </h1>

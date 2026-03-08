@@ -1,9 +1,18 @@
 import { SubmitDuaCard } from "@/components/SubmitDuaCard";
 
 export const metadata = {
-    title: "Submit a Dua | Ameenly",
+    title: "Submit a Dua — Share Your Prayer on the Dua Wall",
     description:
-        "Share your dua on the public wall for others to say Ameen.",
+        "Submit your dua to the Ameenly dua wall. Share a prayer request and receive duas from Muslims around the world. Your dua is just one Ameen away.",
+    alternates: {
+        canonical: "/submit",
+    },
+    openGraph: {
+        title: "Submit a Dua — Share Your Prayer on the Dua Wall",
+        description:
+            "Post your dua to the Ameenly dua wall. Share a prayer request and receive duas from Muslims around the world.",
+        type: "website",
+    },
 };
 
 type Props = {

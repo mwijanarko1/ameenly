@@ -64,7 +64,7 @@ export function SubmitDuaCardClient({ submitDua }: SubmitDuaCardClientProps) {
   return (
     <div className="card-glass card-submit submit-section">
       <div>
-        <h2>Share Your Dua</h2>
+        <h1>Share Your Dua</h1>
         <p className="submit-hint">
           Your dua will appear on the public wall for others to say Ameen. Guests
           get 1 post every 24 hours by IP. Signed-in users get up to 50 per hour and

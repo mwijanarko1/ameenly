@@ -473,6 +473,7 @@ body {
   gap: 16px;
 }
 
+.card-submit h1,
 .card-submit h2 {
   font-size: 1.25rem;
   font-weight: 700;
@@ -1104,6 +1105,26 @@ body {
   color: var(--text-primary);
 }
 
+.breadcrumb {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.breadcrumb a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.breadcrumb a:hover {
+  color: var(--text-primary);
+}
+
+.breadcrumb-sep {
+  margin: 0 6px;
+  opacity: 0.7;
+}
+
 /* Compact nav buttons — clearly clickable actions */
 .nav-btn {
   display: inline-flex;
@@ -1176,6 +1197,29 @@ body {
 
 .app-footer a:hover {
   color: var(--text-primary);
+}
+
+.site-footer {
+  padding: 16px;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.site-footer a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.site-footer a:hover {
+  color: var(--text-primary);
+}
+
+.site-footer-sep {
+  margin: 0 8px;
+  opacity: 0.6;
 }
 
 .dua-card-delete {
