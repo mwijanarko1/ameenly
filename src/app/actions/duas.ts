@@ -3,10 +3,18 @@
 import { headers } from "next/headers";
 import { createHash } from "crypto";
 import { ConvexHttpClient } from "convex/browser";
-import { api } from "convex/_generated/api";
+import { z } from "zod";
+import { auth } from "@clerk/nextjs/server";
+import { api, internal } from "convex/_generated/api";
+import { requireEnv } from "@/lib/env";
 
-function getClientIp(): string {
-  const headersList = headers();
+const submitPublicDuaSchema = z.object({
+  text: z.string().trim().min(1, "Dua text is required").max(2000),
+  name: z.string().trim().max(100).optional(),
+});
+
+async function getClientIp(): Promise<string> {
+  const headersList = await headers();
   const forwarded = headersList.get("x-forwarded-for");
   const realIp = headersList.get("x-real-ip");
   if (forwarded) {
@@ -23,34 +31,59 @@ function hashIp(ip: string): string {
 }
 
 export async function submitPublicDua(formData: FormData) {
-  const text = formData.get("text") as string | null;
-  const name = (formData.get("name") as string | null) || undefined;
+  const parsed = submitPublicDuaSchema.safeParse({
+    text: formData.get("text"),
+    name: formData.get("name") || undefined,
+  });
 
-  if (!text?.trim()) {
-    return { error: "Dua text is required" };
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid form submission" };
   }
 
-  const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
-  if (!convexUrl) {
+  let convexUrl: string;
+  try {
+    ({ NEXT_PUBLIC_CONVEX_URL: convexUrl } = requireEnv("NEXT_PUBLIC_CONVEX_URL"));
+  } catch {
     return { error: "Server configuration error" };
   }
 
-  const ip = getClientIp();
-  const ipHash = hashIp(ip);
-
-  const client = new ConvexHttpClient(convexUrl);
+  const { userId } = await auth();
 
   try {
-    await client.mutation(api.duas.submitPublicDua, {
-      text: text.trim(),
-      name: name?.trim() || undefined,
-      ipHash,
-    });
+    if (userId) {
+      const { CONVEX_DEPLOY_KEY: convexDeployKey } = requireEnv("CONVEX_DEPLOY_KEY");
+      const adminClient = new ConvexHttpClient(convexUrl) as ConvexHttpClient & {
+        setAdminAuth: (token: string) => void;
+      };
+      adminClient.setAdminAuth(convexDeployKey);
+
+      await adminClient.mutation(
+        internal.duas.submitAuthenticatedPublicDuaFromServer as unknown as Parameters<
+          ConvexHttpClient["mutation"]
+        >[0],
+        {
+          clerkId: userId,
+          text: parsed.data.text,
+          name: parsed.data.name || undefined,
+        }
+      );
+    } else {
+      const ip = await getClientIp();
+      const ipHash = hashIp(ip);
+      const client = new ConvexHttpClient(convexUrl);
+
+      await client.mutation(api.duas.submitGuestPublicDua, {
+        text: parsed.data.text,
+        name: parsed.data.name || undefined,
+        ipHash,
+      });
+    }
+
     return { success: true };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Something went wrong";
     if (message.includes("Rate limit")) {
-      return { error: "Rate limit reached. You can submit up to 5 duas per 24 hours." };
+      return { error: message };
     }
     return { error: message };
   }

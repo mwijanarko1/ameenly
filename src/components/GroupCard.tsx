@@ -11,15 +11,25 @@ export function GroupCard({ group }: GroupCardProps) {
   return (
     <Link
       href={`/groups/${group._id}`}
-      className="block rounded-xl border border-emerald-800/30 bg-emerald-950/30 p-4 sm:p-5 backdrop-blur hover:border-amber-600/50 hover:bg-emerald-950/50 transition-colors"
+      className="group-card"
     >
-      <h3 className="font-semibold text-emerald-50">{group.name}</h3>
+      <h3 style={{ fontWeight: 600, color: "var(--text-primary)" }}>{group.name}</h3>
       {group.description && (
-        <p className="mt-1 text-sm text-emerald-300/70 line-clamp-2">
+        <p
+          style={{
+            marginTop: "6px",
+            fontSize: "0.85rem",
+            color: "var(--text-secondary)",
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+          }}
+        >
           {group.description}
         </p>
       )}
-      <p className="mt-2 text-xs text-emerald-400/60">
+      <p style={{ marginTop: "8px", fontSize: "0.75rem", color: "var(--text-accent)" }}>
         View duas →
       </p>
     </Link>

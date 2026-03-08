@@ -40,6 +40,7 @@ Follow the prompts to create or link a Convex project. This generates `convex/_g
    - `CLERK_SECRET_KEY`
 3. In the Convex dashboard, set `CLERK_JWT_ISSUER_DOMAIN` (your Clerk Frontend API URL)
 4. In the Clerk dashboard, add a webhook pointing to `https://your-domain.com/api/webhooks/clerk` with `user.created` and `user.updated` events. Set `CLERK_WEBHOOK_SECRET` in `.env.local` and in the Convex dashboard.
+5. Add `CONVEX_DEPLOY_KEY` to `.env.local` so the webhook route can call Convex internal mutations securely.
 
 ### 4. Environment variables
 
@@ -50,6 +51,7 @@ Copy `.env.example` to `.env.local` and fill in:
 - `CLERK_SECRET_KEY` — from Clerk
 - `CLERK_WEBHOOK_SECRET` — from Clerk webhook
 - `CLERK_JWT_ISSUER_DOMAIN` — from Clerk (e.g. `https://xxx.clerk.accounts.dev`)
+- `CONVEX_DEPLOY_KEY` — Convex deploy/admin key for server-side internal mutation access
 
 ### 5. Run the app
 

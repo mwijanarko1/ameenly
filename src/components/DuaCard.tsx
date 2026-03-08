@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import { SignInButton, useAuth } from "@clerk/nextjs";
 import { useMutation } from "convex/react";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
@@ -13,7 +15,10 @@ function formatTimeAgo(ts: number): string {
   if (mins < 60) return `${mins}m ago`;
   if (hours < 24) return `${hours}h ago`;
   if (days < 7) return `${days}d ago`;
-  return new Date(ts).toLocaleDateString();
+  return new Intl.DateTimeFormat("en", {
+    month: "short",
+    day: "numeric",
+  }).format(new Date(ts));
 }
 
 type PublicDua = {
@@ -22,6 +27,7 @@ type PublicDua = {
   name?: string;
   createdAt: number;
   ameen: number;
+  hasCurrentUserSaidAmeen?: boolean;
 };
 
 type GroupDua = PublicDua & {
@@ -35,24 +41,64 @@ type DuaCardProps = {
 };
 
 export function DuaCard({ dua, onDelete, canDelete }: DuaCardProps) {
+  const { isSignedIn } = useAuth();
   const sayAmeen = useMutation(api.duas.sayAmeen);
+  const [isSubmittingAmeen, setIsSubmittingAmeen] = useState(false);
+  const [ameenError, setAmeenError] = useState<string | null>(null);
   const displayName =
     "authorName" in dua && dua.authorName
       ? dua.authorName
       : dua.name?.trim() || "Anonymous";
 
+  async function handleSayAmeen() {
+    try {
+      setAmeenError(null);
+      setIsSubmittingAmeen(true);
+      await sayAmeen({ duaId: dua._id });
+    } catch (error) {
+      setAmeenError(
+        error instanceof Error ? error.message : "Could not say Ameen."
+      );
+    } finally {
+      setIsSubmittingAmeen(false);
+    }
+  }
+
   return (
     <article
-      className="rounded-xl border border-emerald-800/30 bg-emerald-950/30 p-4 sm:p-5 backdrop-blur"
+      className="glass-panel"
+      style={{ padding: "20px 24px" }}
       aria-label={`Dua from ${displayName}`}
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-amber-200/90">{displayName}</p>
-          <p className="mt-2 whitespace-pre-wrap text-emerald-50/95 leading-relaxed">
+      <div
+        style={{
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          gap: "8px",
+        }}
+      >
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <p style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-accent)" }}>
+            {displayName}
+          </p>
+          <p
+            style={{
+              marginTop: "8px",
+              whiteSpace: "pre-wrap",
+              color: "var(--text-primary)",
+              lineHeight: 1.6,
+            }}
+          >
             {dua.text}
           </p>
-          <p className="mt-2 text-xs text-emerald-300/60">
+          <p
+            style={{
+              marginTop: "8px",
+              fontSize: "0.75rem",
+              color: "var(--text-secondary)",
+            }}
+          >
             {formatTimeAgo(dua.createdAt)}
           </p>
         </div>
@@ -60,25 +106,68 @@ export function DuaCard({ dua, onDelete, canDelete }: DuaCardProps) {
           <button
             type="button"
             onClick={onDelete}
-            className="shrink-0 rounded px-2 py-1 text-xs text-red-400 hover:bg-red-500/20 hover:text-red-300"
+            style={{
+              flexShrink: 0,
+              borderRadius: "8px",
+              padding: "4px 10px",
+              fontSize: "0.75rem",
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+            }}
+            className="text-error"
             aria-label="Delete dua"
           >
             Delete
           </button>
         )}
       </div>
-      <div className="mt-3 flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => sayAmeen({ duaId: dua._id })}
-          className="rounded-lg bg-amber-600/80 px-3 py-1.5 text-sm font-medium text-amber-50 hover:bg-amber-500/90 transition-colors"
-        >
-          Say Ameen
-        </button>
-        <span className="text-sm text-amber-200/80">
+      <div
+        style={{
+          marginTop: "12px",
+          display: "flex",
+          alignItems: "center",
+          gap: "10px",
+          paddingTop: "12px",
+          borderTop: "1px solid var(--border-subtle)",
+        }}
+      >
+        {isSignedIn ? (
+          <button
+            type="button"
+            onClick={() => {
+              void handleSayAmeen();
+            }}
+            disabled={isSubmittingAmeen || dua.hasCurrentUserSaidAmeen}
+            className="btn-ameen"
+          >
+            {dua.hasCurrentUserSaidAmeen
+              ? "Ameen"
+              : isSubmittingAmeen
+                ? "Saying Ameen…"
+                : "Say Ameen"}
+          </button>
+        ) : (
+          <SignInButton mode="modal">
+            <button type="button" className="btn-ameen">
+              Say Ameen
+            </button>
+          </SignInButton>
+        )}
+        <span className="ameen-count">
           {dua.ameen} {dua.ameen === 1 ? "Ameen" : "Ameens"}
         </span>
       </div>
+      {ameenError ? (
+        <p
+          className="text-error"
+          style={{ marginTop: "8px", fontSize: "0.8rem" }}
+          role="alert"
+          aria-live="polite"
+        >
+          {ameenError}
+        </p>
+      ) : null}
     </article>
   );
 }

@@ -37,7 +37,14 @@ export default defineSchema({
     createdAt: v.number(),
     ameen: v.number(),
   })
-    .index("by_public_wall", ["groupId", "createdAt"])
     .index("by_group_wall", ["groupId", "createdAt"])
-    .index("by_ip_and_time", ["ipHash", "createdAt"]),
+    .index("by_ip_and_time", ["ipHash", "createdAt"])
+    .index("by_author_and_time", ["authorId", "createdAt"]),
+
+  ameens: defineTable({
+    duaId: v.id("duas"),
+    userId: v.id("users"),
+  })
+    .index("by_dua_and_user", ["duaId", "userId"])
+    .index("by_dua", ["duaId"]),
 });

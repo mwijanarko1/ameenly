@@ -2,15 +2,27 @@ import { Webhook } from "svix";
 import { headers } from "next/headers";
 import { WebhookEvent } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
-import { api } from "convex/_generated/api";
-
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+import { internal } from "convex/_generated/api";
+import { requireEnv } from "@/lib/env";
 
 export async function POST(req: Request) {
-  const webhookSecret = process.env.CLERK_WEBHOOK_SECRET;
-  if (!webhookSecret) {
-    console.error("Missing CLERK_WEBHOOK_SECRET");
-    return new Response("Webhook secret not configured", { status: 500 });
+  let webhookSecret: string;
+  let convexUrl: string;
+  let convexDeployKey: string;
+
+  try {
+    ({
+      CLERK_WEBHOOK_SECRET: webhookSecret,
+      NEXT_PUBLIC_CONVEX_URL: convexUrl,
+      CONVEX_DEPLOY_KEY: convexDeployKey,
+    } = requireEnv(
+      "CLERK_WEBHOOK_SECRET",
+      "NEXT_PUBLIC_CONVEX_URL",
+      "CONVEX_DEPLOY_KEY"
+    ));
+  } catch (error) {
+    console.error("Missing webhook configuration:", error);
+    return new Response("Webhook configuration error", { status: 500 });
   }
 
   const headerPayload = await headers();
@@ -43,13 +55,22 @@ export async function POST(req: Request) {
     const { id, first_name, last_name, email_addresses } = event.data;
     const primaryEmail = email_addresses?.find((e) => e.id === event.data.primary_email_address_id);
     const name = [first_name, last_name].filter(Boolean).join(" ") || "User";
+    const convex = new ConvexHttpClient(convexUrl) as ConvexHttpClient & {
+      setAdminAuth: (token: string) => void;
+    };
+    convex.setAdminAuth(convexDeployKey);
 
-    await convex.mutation(api.users.upsertUser, {
-      clerkId: id,
-      name,
-      email: primaryEmail?.email_address,
-      webhookSecret: webhookSecret,
-    });
+    // ConvexHttpClient.mutation types expect public refs; internal refs work at runtime with setAdminAuth
+    await convex.mutation(
+      internal.users.upsertUserFromWebhook as unknown as Parameters<
+        ConvexHttpClient["mutation"]
+      >[0],
+      {
+        clerkId: id,
+        name,
+        email: primaryEmail?.email_address,
+      }
+    );
   }
 
   return new Response("", { status: 200 });

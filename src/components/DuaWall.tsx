@@ -7,83 +7,130 @@ import { DuaCard } from "./DuaCard";
 
 type DuaWallProps =
   | {
-      mode: "public";
-    }
+    mode: "public";
+  }
   | {
-      mode: "group";
-      groupId: Id<"groups">;
-      canDelete?: boolean;
-      onDeleteDua?: (duaId: Id<"duas">) => void;
-    };
+    mode: "group";
+    groupId: Id<"groups">;
+    canDelete?: boolean;
+    onDeleteDua?: (duaId: Id<"duas">) => void;
+  };
 
 export function DuaWall(props: DuaWallProps) {
-  const publicResult =
-    props.mode === "public"
-      ? usePaginatedQuery(
-          api.duas.listPublicDuas,
-          {},
-          { initialNumItems: 10 }
-        )
-      : null;
+  if (props.mode === "public") {
+    return <PublicDuaWall />;
+  }
 
-  const groupResult =
-    props.mode === "group"
-      ? usePaginatedQuery(
-          api.groupDuas.listGroupDuas,
-          { groupId: props.groupId },
-          { initialNumItems: 10 }
-        )
-      : null;
+  return (
+    <GroupDuaWall
+      groupId={props.groupId}
+      canDelete={props.canDelete}
+      onDeleteDua={props.onDeleteDua}
+    />
+  );
+}
 
-  const result = publicResult ?? groupResult;
-  const duas = result?.results ?? [];
-  const status = result?.status ?? "LoadingFirstPage";
-  const loadMore = result?.loadMore ?? (() => {});
+function PublicDuaWall() {
+  const result = usePaginatedQuery(api.duas.listPublicDuas, {}, { initialNumItems: 10 });
 
+  return <DuaWallContent duas={result.results} status={result.status} loadMore={result.loadMore} />;
+}
+
+type GroupDuaWallProps = {
+  groupId: Id<"groups">;
+  canDelete?: boolean;
+  onDeleteDua?: (duaId: Id<"duas">) => void;
+};
+
+function GroupDuaWall({ groupId, canDelete, onDeleteDua }: GroupDuaWallProps) {
+  const result = usePaginatedQuery(
+    api.groupDuas.listGroupDuas,
+    { groupId },
+    { initialNumItems: 10 }
+  );
+
+  if (!result.results.length && result.status === "LoadingFirstPage") {
+    return (
+      <div style={{ padding: "48px 0", textAlign: "center", color: "var(--text-secondary)" }}>
+        Loading duas…
+      </div>
+    );
+  }
+
+  return (
+    <DuaWallContent
+      duas={result.results}
+      status={result.status}
+      loadMore={result.loadMore}
+      canDelete={canDelete}
+      onDeleteDua={onDeleteDua}
+    />
+  );
+}
+
+type DuaWallContentProps = {
+  duas: Array<{
+    _id: Id<"duas">;
+    text: string;
+    name?: string;
+    authorName?: string;
+    createdAt: number;
+    ameen: number;
+    hasCurrentUserSaidAmeen?: boolean;
+  }>;
+  status: "CanLoadMore" | "Exhausted" | "LoadingFirstPage" | "LoadingMore";
+  loadMore: (numItems: number) => void;
+  canDelete?: boolean;
+  onDeleteDua?: (duaId: Id<"duas">) => void;
+};
+
+function DuaWallContent({
+  duas,
+  status,
+  loadMore,
+  canDelete,
+  onDeleteDua,
+}: DuaWallContentProps) {
   if (duas.length === 0 && status === "LoadingFirstPage") {
     return (
-      <div className="py-12 text-center text-emerald-300/70">
-        Loading duas...
+      <div style={{ padding: "48px 0", textAlign: "center", color: "var(--text-secondary)" }}>
+        Loading duas…
       </div>
     );
   }
 
   if (duas.length === 0) {
     return (
-      <div className="py-12 text-center text-emerald-300/70">
-        No duas yet. Be the first to add one.
+      <div className="empty-state">
+        <p>No duas yet. Be the first to add one.</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
       {duas.map((dua) => (
         <DuaCard
           key={dua._id}
           dua={dua}
-          canDelete={props.mode === "group" ? props.canDelete : false}
-          onDelete={
-            props.mode === "group" && props.onDeleteDua
-              ? () => props.onDeleteDua!(dua._id)
-              : undefined
-          }
+          canDelete={canDelete}
+          onDelete={onDeleteDua ? () => onDeleteDua(dua._id) : undefined}
         />
       ))}
       {status === "CanLoadMore" && (
-        <div className="flex justify-center pt-4">
+        <div style={{ display: "flex", justifyContent: "center", paddingTop: "16px" }}>
           <button
             type="button"
             onClick={() => loadMore(10)}
-            className="rounded-lg bg-emerald-700/80 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-600/90 transition-colors"
+            className="btn-ameen"
           >
-            Load more
+            Load More
           </button>
         </div>
       )}
       {status === "LoadingMore" && (
-        <div className="py-4 text-center text-emerald-300/70 text-sm">
-          Loading...
+        <div style={{ padding: "16px 0", textAlign: "center", color: "var(--text-secondary)", fontSize: "0.85rem" }}>
+          Loading…
         </div>
       )}
     </div>

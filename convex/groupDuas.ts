@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { paginationOptsValidator } from "convex/server";
 import { getConvexUserFromIdentity } from "./lib/auth";
+import { enforceAuthenticatedDuaRateLimit } from "./lib/duaRateLimits";
 
 export const listGroupDuas = query({
   args: {
@@ -10,10 +11,12 @@ export const listGroupDuas = query({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return null;
+    if (!identity)
+      return { page: [], isDone: true, continueCursor: "" };
 
     const user = await getConvexUserFromIdentity(ctx, identity.subject);
-    if (!user) return null;
+    if (!user)
+      return { page: [], isDone: true, continueCursor: "" };
 
     const membership = await ctx.db
       .query("groupMembers")
@@ -22,12 +25,13 @@ export const listGroupDuas = query({
       )
       .first();
 
-    if (!membership) return null;
+    if (!membership)
+      return { page: [], isDone: true, continueCursor: "" };
 
     const result = await ctx.db
       .query("duas")
       .withIndex("by_group_wall", (q) => q.eq("groupId", args.groupId))
-      .order("desc", "createdAt")
+      .order("desc")
       .paginate(args.paginationOpts);
 
     const pageWithAuthors = await Promise.all(
@@ -35,9 +39,16 @@ export const listGroupDuas = query({
         const author = dua.authorId
           ? await ctx.db.get("users", dua.authorId)
           : null;
+        const existing = await ctx.db
+          .query("ameens")
+          .withIndex("by_dua_and_user", (q) =>
+            q.eq("duaId", dua._id).eq("userId", user._id)
+          )
+          .first();
         return {
           ...dua,
           authorName: author?.name ?? "Anonymous",
+          hasCurrentUserSaidAmeen: !!existing,
         };
       })
     );
@@ -70,11 +81,15 @@ export const submitGroupDua = mutation({
 
     if (!membership) throw new Error("You are not a member of this group");
 
-    if (!args.text.trim()) throw new Error("Dua text is required");
-    if (args.text.length > 2000) throw new Error("Dua text must be 2000 characters or less");
+    const trimmedText = args.text.trim();
+
+    if (!trimmedText) throw new Error("Dua text is required");
+    if (trimmedText.length > 2000) throw new Error("Dua text must be 2000 characters or less");
+
+    await enforceAuthenticatedDuaRateLimit(ctx, user._id);
 
     return await ctx.db.insert("duas", {
-      text: args.text.trim(),
+      text: trimmedText,
       groupId: args.groupId,
       authorId: user._id,
       createdAt: Date.now(),

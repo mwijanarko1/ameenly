@@ -15,13 +15,19 @@ export const createGroup = mutation({
     const user = await getConvexUserFromIdentity(ctx, identity.subject);
     if (!user) throw new Error("User not found. Please complete sign-up.");
 
-    if (!args.name.trim()) throw new Error("Group name is required");
-    if (args.name.length > 100) throw new Error("Group name must be 100 characters or less");
+    const trimmedName = args.name.trim();
+    const trimmedDescription = args.description?.trim();
+
+    if (!trimmedName) throw new Error("Group name is required");
+    if (trimmedName.length > 100) throw new Error("Group name must be 100 characters or less");
+    if (trimmedDescription && trimmedDescription.length > 300) {
+      throw new Error("Description must be 300 characters or less");
+    }
 
     const inviteCode = nanoid(10);
     const groupId = await ctx.db.insert("groups", {
-      name: args.name.trim(),
-      description: args.description?.trim() || undefined,
+      name: trimmedName,
+      description: trimmedDescription || undefined,
       creatorId: user._id,
       inviteCode,
       createdAt: Date.now(),

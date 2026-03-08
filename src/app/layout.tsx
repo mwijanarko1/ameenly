@@ -1,58 +1,49 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import { ClerkProvider } from "@clerk/nextjs";
+import {
+  ClerkProvider,
+  Show,
+  SignInButton,
+  SignUpButton,
+  UserButton,
+} from "@clerk/nextjs";
 import "./globals.css";
 import Providers from "./providers";
+import { getEnv } from "@/lib/env";
+import Link from "next/link";
 
-// Initialize the Geist font with Latin subset
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-// Initialize the Geist Mono font with Latin subset
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const { NEXT_PUBLIC_APP_URL } = getEnv();
+const appUrl = NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#111827" },
+    { media: "(prefers-color-scheme: light)", color: "#F8FBFF" },
+    { media: "(prefers-color-scheme: dark)", color: "#0F1724" },
   ],
 };
 
-// Define metadata for better SEO
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"),
+  metadataBase: new URL(appUrl),
   title: "Ameenly — Share duas, receive duas",
-  description: "Submit duas and make duas for others. Ramadan is the month of dua.",
+  description:
+    "Submit duas and make duas for others. Ramadan is the month of dua.",
   keywords: ["dua", "Ramadan", "prayer", "Islamic", "Ameenly"],
-  authors: [{ name: "Created with Cursor Agent" }],
-  creator: "Cursor Agent",
-  publisher: "Cursor Agent",
+  authors: [{ name: "Ameenly" }],
+  creator: "Ameenly",
+  publisher: "Ameenly",
   openGraph: {
     title: "Ameenly — Share duas, receive duas",
-    description: "Submit duas and make duas for others. Ramadan is the month of dua.",
-    url: "https://nextjs.org/",
+    description:
+      "Submit duas and make duas for others. Ramadan is the month of dua.",
+    url: appUrl,
     siteName: "Ameenly",
-    images: [
-      {
-        url: "/og-image.png",
-        width: 1200,
-        height: 630,
-        alt: "Ameenly",
-      },
-    ],
     locale: "en_US",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title: "Ameenly — Share duas, receive duas",
-    description: "Submit duas and make duas for others. Ramadan is the month of dua.",
-    images: ["/og-image.png"],
+    description:
+      "Submit duas and make duas for others. Ramadan is the month of dua.",
   },
   robots: {
     index: true,
@@ -67,18 +58,98 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100`}
-      >
-        <ClerkProvider>
+      <head>
+        <meta name="color-scheme" content="light dark" />
+      </head>
+      <body>
+        <ClerkProvider afterSignOutUrl="/">
+          {/* ─── Background orbs ─── */}
+          <div className="bg-orbs" aria-hidden="true" />
+
+          {/* ─── Top bar ─── */}
+          <header className="top-bar">
+            <div className="top-bar-inner">
+              <Link href="/" className="top-bar-brand">
+                Ameen<span>ly</span>
+              </Link>
+              <nav className="top-bar-nav">
+                <Show when="signed-in">
+                  <Link href="/profile" className="top-bar-link">
+                    My Duas
+                  </Link>
+                </Show>
+                <Show when="signed-in">
+                  <Link href="/groups" className="top-bar-link">
+                    My Groups
+                  </Link>
+                </Show>
+                <Show when="signed-out">
+                  <SignInButton mode="modal">
+                    <button
+                      type="button"
+                      className="btn-ameen"
+                      style={{ padding: "8px 16px", fontSize: "0.8rem" }}
+                    >
+                      Sign In
+                    </button>
+                  </SignInButton>
+                  <SignUpButton mode="modal">
+                    <button
+                      type="button"
+                      style={{
+                        padding: "8px 16px",
+                        fontSize: "0.8rem",
+                        borderRadius: "12px",
+                        border: "1px solid var(--border-glow)",
+                        background: "transparent",
+                        color: "var(--text-accent)",
+                        cursor: "pointer",
+                        fontWeight: 500,
+                      }}
+                    >
+                      Sign Up
+                    </button>
+                  </SignUpButton>
+                </Show>
+                <Show when="signed-in">
+                  <UserButton />
+                </Show>
+              </nav>
+            </div>
+          </header>
+
           <Providers>
             <a
               href="#main-content"
-              className="absolute -top-12 left-4 z-50 px-4 py-2 bg-emerald-700 text-white rounded-md transition-[top] duration-200 focus:top-4 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+              className="sr-only focus:not-sr-only"
+              style={{
+                position: "absolute",
+                zIndex: 999,
+                top: "8px",
+                left: "8px",
+                padding: "8px 16px",
+                background: "var(--btn-bg)",
+                color: "var(--btn-text)",
+                borderRadius: "8px",
+              }}
             >
               Skip to main content
             </a>
-            {children}
+
+            <div style={{ position: "relative", zIndex: 1 }}>{children}</div>
+
+            <footer className="app-footer">
+              <div className="app-footer-inner">
+                <p>
+                  Guests can post 1 public dua every 24 hours by IP. Signed-in
+                  users can post up to 50 duas per hour and use private groups.
+                </p>
+                <nav aria-label="Legal" style={{ display: "flex", gap: "16px" }}>
+                  <a href="/privacy">Privacy</a>
+                  <a href="/terms">Terms</a>
+                </nav>
+              </div>
+            </footer>
           </Providers>
         </ClerkProvider>
       </body>

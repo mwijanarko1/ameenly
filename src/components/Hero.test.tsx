@@ -12,8 +12,10 @@ describe("Hero", () => {
     expect(screen.getByText(/Share duas. Make duas for others/i)).toBeInTheDocument();
   });
 
-  it("has main content landmark", () => {
+  it("renders the supporting description", () => {
     render(<Hero />);
-    expect(screen.getByRole("main")).toBeInTheDocument();
+    expect(
+      screen.getByText(/Submit your dua to the public wall or create a private group/i)
+    ).toBeInTheDocument();
   });
 });

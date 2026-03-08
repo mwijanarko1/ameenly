@@ -2,7 +2,7 @@ import type { QueryCtx } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
 
 export async function getConvexUserFromIdentity(
-  ctx: QueryCtx,
+  ctx: Pick<QueryCtx, "db">,
   clerkId: string
 ): Promise<{ _id: Id<"users">; name: string } | null> {
   return await ctx.db

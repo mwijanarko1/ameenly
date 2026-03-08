@@ -30,23 +30,49 @@ export function MembersList({
   }
 
   return (
-    <ul className="divide-y divide-emerald-800/40">
-      {members.map((m) => (
+    <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+      {members.map((m, i) => (
         <li
           key={m._id}
-          className="flex items-center justify-between py-3 first:pt-0"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "14px 0",
+            borderTop: i > 0 ? "1px solid var(--border-subtle)" : "none",
+          }}
         >
-          <span className="text-emerald-50">
+          <span style={{ color: "var(--text-primary)" }}>
             {m.userName}
             {m.role === "admin" && (
-              <span className="ml-2 text-xs text-amber-400/80">admin</span>
+              <span
+                style={{
+                  marginLeft: "8px",
+                  fontSize: "0.7rem",
+                  color: "var(--text-accent)",
+                  fontWeight: 500,
+                }}
+              >
+                admin
+              </span>
             )}
           </span>
           {m.role === "member" && m.userId !== currentUserId && (
             <button
               type="button"
-              onClick={() => handleRemove(m.userId)}
-              className="text-xs text-red-400 hover:text-red-300"
+              onClick={() => {
+                void handleRemove(m.userId);
+              }}
+              className="text-error"
+              style={{
+                fontSize: "0.75rem",
+                background: "transparent",
+                border: "none",
+                cursor: "pointer",
+                padding: "4px 8px",
+                borderRadius: "6px",
+              }}
+              aria-label={`Remove ${m.userName} from the group`}
             >
               Remove
             </button>
