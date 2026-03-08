@@ -1,15 +1,19 @@
 "use client";
 
+import { use, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePaginatedQuery } from "convex/react";
 import { api } from "convex/_generated/api";
+import type { Id } from "convex/_generated/dataModel";
 import {
   Show,
-  SignInButton,
-  SignUpButton,
   UserButton,
+  useClerk,
   useUser,
 } from "@clerk/nextjs";
+import { buildAuthHref } from "@/lib/authRedirect";
+import { getDuaDisplayName } from "@/lib/duaDisplay";
+import { LegalLinks } from "@/components/LegalLinks";
 
 function formatTimeAgo(timestamp: number) {
   const diff = Date.now() - timestamp;
@@ -27,6 +31,32 @@ function formatTimeAgo(timestamp: number) {
     day: "numeric",
   }).format(new Date(timestamp));
 }
+
+type ProfileDua = {
+  _id: Id<"duas">;
+  text: string;
+  name?: string;
+  isAnonymous?: boolean;
+  groupId?: Id<"groups">;
+  createdAt: number;
+  ameen: number;
+  visibility: "group" | "public";
+  groupName?: string;
+  hasCurrentUserSaidAmeen?: boolean;
+};
+
+type AmeenDua = {
+  _id: Id<"duas">;
+  text: string;
+  name?: string;
+  authorName?: string;
+  isAnonymous?: boolean;
+  groupId?: Id<"groups">;
+  createdAt: number;
+  ameen: number;
+  visibility: "group" | "public";
+  groupName?: string;
+};
 
 function SignedOutProfile() {
   return (
@@ -95,16 +125,20 @@ function SignedOutProfile() {
               width: "100%",
             }}
           >
-            <SignInButton mode="modal">
-              <button type="button" className="btn-primary">
-                Sign In
-              </button>
-            </SignInButton>
-            <SignUpButton mode="modal">
-              <button type="button" className="btn-secondary">
-                Create Account
-              </button>
-            </SignUpButton>
+            <Link
+              href={buildAuthHref("/sign-in", "/profile")}
+              className="btn-primary"
+              style={{ textDecoration: "none", textAlign: "center" }}
+            >
+              Sign In
+            </Link>
+            <Link
+              href={buildAuthHref("/sign-up", "/profile")}
+              className="btn-secondary"
+              style={{ textDecoration: "none", textAlign: "center" }}
+            >
+              Create Account
+            </Link>
           </div>
         </div>
 
@@ -115,71 +149,7 @@ function SignedOutProfile() {
             aria-label="Legal"
             style={{ display: "flex", flexDirection: "column", gap: "0" }}
           >
-            <Link href="/privacy" className="profile-legal-link">
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-              </svg>
-              <span>Privacy Policy</span>
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-                style={{ marginLeft: "auto", opacity: 0.4 }}
-              >
-                <path d="M9 18l6-6-6-6" />
-              </svg>
-            </Link>
-            <Link href="/terms" className="profile-legal-link">
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                <path d="M14 2v6h6" />
-                <line x1="16" y1="13" x2="8" y2="13" />
-                <line x1="16" y1="17" x2="8" y2="17" />
-                <line x1="10" y1="9" x2="8" y2="9" />
-              </svg>
-              <span>Terms of Use</span>
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-                style={{ marginLeft: "auto", opacity: 0.4 }}
-              >
-                <path d="M9 18l6-6-6-6" />
-              </svg>
-            </Link>
+            <LegalLinks />
           </nav>
         </div>
 
@@ -190,13 +160,74 @@ function SignedOutProfile() {
 
 function SignedInProfile() {
   const { user } = useUser();
+  const { signOut } = useClerk();
+  const [activeTab, setActiveTab] = useState<"mine" | "ameen">("mine");
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [draftName, setDraftName] = useState("");
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [isSavingName, setIsSavingName] = useState(false);
+  const displayNameInputRef = useRef<HTMLInputElement>(null);
   const result = usePaginatedQuery(
     api.duas.listMyDuas,
     {},
     { initialNumItems: 10 }
   );
+  const ameenResult = usePaginatedQuery(
+    api.duas.listDuasUserSaidAmeenTo,
+    {},
+    { initialNumItems: 10 }
+  );
 
-  const duas = result.results;
+  const duas = result.results as ProfileDua[];
+  const ameenDuas = ameenResult.results as AmeenDua[];
+
+  const displayName =
+    [user?.firstName, user?.lastName].filter(Boolean).join(" ").trim() ||
+    "My Profile";
+
+  const startEditingName = () => {
+    setDraftName(
+      [user?.firstName, user?.lastName].filter(Boolean).join(" ").trim() || ""
+    );
+    setNameError(null);
+    setIsEditingName(true);
+  };
+
+  const cancelEditingName = () => {
+    setIsEditingName(false);
+    setDraftName("");
+    setNameError(null);
+  };
+
+  useEffect(() => {
+    if (isEditingName) {
+      displayNameInputRef.current?.focus();
+    }
+  }, [isEditingName]);
+
+  const saveDisplayName = async () => {
+    const trimmed = draftName.trim();
+    if (!trimmed) {
+      setNameError("Display name cannot be empty");
+      return;
+    }
+    if (trimmed.length > 64) {
+      setNameError("Display name must be 64 characters or less");
+      return;
+    }
+    if (!user) return;
+    setIsSavingName(true);
+    setNameError(null);
+    try {
+      await user.update({ firstName: trimmed, lastName: "" });
+      setIsEditingName(false);
+      setDraftName("");
+    } catch (err) {
+      setNameError(err instanceof Error ? err.message : "Failed to update name");
+    } finally {
+      setIsSavingName(false);
+    }
+  };
 
   return (
     <main id="main-content" className="page-container" style={{ paddingBottom: "120px" }}>
@@ -215,199 +246,344 @@ function SignedInProfile() {
           }}
         />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <h1 className="page-title" style={{ marginBottom: "4px" }}>
-            {user?.firstName ?? "My Profile"}
-          </h1>
-          <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem" }}>
-            {user?.primaryEmailAddress?.emailAddress ?? ""}
-          </p>
-        </div>
-      </div>
-
-      {/* ── Quick Links ── */}
-      <div
-        style={{
-          display: "flex",
-          gap: "12px",
-          marginBottom: "28px",
-          flexWrap: "wrap",
-        }}
-      >
-        <Link
-          href="/"
-          className="btn-ameen"
-          style={{ textDecoration: "none" }}
-        >
-          Public Wall
-        </Link>
-        <Link
-          href="/groups"
-          className="btn-ameen"
-          style={{ textDecoration: "none" }}
-        >
-          My Groups
-        </Link>
-      </div>
-
-      {/* ── My Duas ── */}
-      <h2
-        style={{
-          fontSize: "1.1rem",
-          fontWeight: 600,
-          color: "var(--text-primary)",
-          marginBottom: "16px",
-        }}
-      >
-        My Duas
-      </h2>
-
-      {duas.length === 0 && result.status === "LoadingFirstPage" ? (
-        <div className="glass-panel" style={{ textAlign: "center" }}>
-          <p style={{ color: "var(--text-secondary)" }}>Loading your duas…</p>
-        </div>
-      ) : duas.length === 0 ? (
-        <div className="empty-state">
-          <p>You haven&apos;t submitted any duas yet.</p>
-          <Link
-            href="/submit"
-            className="btn-ameen"
-            style={{ display: "inline-block", textDecoration: "none" }}
-          >
-            Share Your First Dua
-          </Link>
-        </div>
-      ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-          {duas.map((dua) => {
-            const locationLabel =
-              dua.visibility === "group"
-                ? dua.groupName
-                  ? `Group: ${dua.groupName}`
-                  : "Private Group"
-                : "Public Wall";
-            const locationHref = dua.groupId ? `/groups/${dua.groupId}` : "/";
-            const submittedAs =
-              dua.visibility === "public" && dua.name
-                ? `Posted publicly as ${dua.name}`
-                : dua.visibility === "public"
-                  ? "Posted publicly from your account"
-                  : "Posted to one of your groups";
-
-            return (
-              <article key={dua._id} className="glass-panel">
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    justifyContent: "space-between",
-                    gap: "12px",
-                    marginBottom: "10px",
-                    flexWrap: "wrap",
-                  }}
-                >
-                  <div>
-                    <p
-                      style={{
-                        fontSize: "0.8rem",
-                        fontWeight: 600,
-                        color: "var(--text-accent)",
-                        marginBottom: "4px",
-                      }}
-                    >
-                      {locationLabel}
-                    </p>
-                    <p
-                      style={{
-                        fontSize: "0.8rem",
-                        color: "var(--text-secondary)",
-                      }}
-                    >
-                      {submittedAs}
-                    </p>
-                  </div>
-                  <p
-                    style={{
-                      fontSize: "0.8rem",
-                      color: "var(--text-secondary)",
-                    }}
-                  >
-                    {formatTimeAgo(dua.createdAt)}
-                  </p>
-                </div>
-
-                <p
-                  style={{
-                    whiteSpace: "pre-wrap",
-                    color: "var(--text-primary)",
-                    lineHeight: 1.7,
-                  }}
-                >
-                  {dua.text}
+          {isEditingName ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              <input
+                type="text"
+                value={draftName}
+                onChange={(e) => setDraftName(e.target.value)}
+                placeholder="Display name"
+                maxLength={64}
+                disabled={isSavingName}
+                ref={displayNameInputRef}
+                aria-label="Display name"
+                className="profile-name-input"
+                style={{
+                  padding: "8px 12px",
+                  fontSize: "1.125rem",
+                  fontWeight: 700,
+                  borderRadius: "8px",
+                  border: "1px solid var(--border-subtle)",
+                  background: "var(--input-bg)",
+                  color: "var(--text-primary)",
+                  transition: "border-color 0.2s, box-shadow 0.2s",
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    void saveDisplayName();
+                  }
+                  if (e.key === "Escape") cancelEditingName();
+                }}
+              />
+              {nameError && (
+                <p style={{ fontSize: "0.8rem", color: "var(--color-sign-out)" }}>
+                  {nameError}
                 </p>
-
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: "12px",
-                    marginTop: "16px",
-                    paddingTop: "16px",
-                    borderTop: "1px solid var(--border-subtle)",
-                    flexWrap: "wrap",
-                  }}
+              )}
+              <div style={{ display: "flex", gap: "8px" }}>
+                <button
+                  type="button"
+                  onClick={saveDisplayName}
+                  disabled={isSavingName}
+                  className="btn-primary"
+                  style={{ padding: "6px 14px", fontSize: "0.85rem" }}
                 >
-                  <span
-                    style={{
-                      fontSize: "0.85rem",
-                      color: "var(--text-secondary)",
-                    }}
-                  >
-                    {dua.ameen} {dua.ameen === 1 ? "Ameen" : "Ameens"}
-                  </span>
-                  <Link
-                    href={locationHref}
-                    className="top-bar-link"
-                    style={{ textDecoration: "none" }}
-                  >
-                    View Context
-                  </Link>
-                </div>
-              </article>
-            );
-          })}
-
-          {result.status === "CanLoadMore" ? (
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                paddingTop: "8px",
-              }}
-            >
-              <button
-                type="button"
-                onClick={() => result.loadMore(10)}
-                className="btn-ameen"
-              >
-                Load More
-              </button>
+                  {isSavingName ? "Saving…" : "Save"}
+                </button>
+                <button
+                  type="button"
+                  onClick={cancelEditingName}
+                  disabled={isSavingName}
+                  className="btn-secondary"
+                  style={{ padding: "6px 14px", fontSize: "0.85rem" }}
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
-          ) : null}
-
-          {result.status === "LoadingMore" ? (
-            <p
-              style={{
-                textAlign: "center",
-                color: "var(--text-secondary)",
-                fontSize: "0.85rem",
-              }}
-            >
-              Loading more…
-            </p>
-          ) : null}
+          ) : (
+            <>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  marginBottom: "4px",
+                }}
+              >
+                <h1 className="page-title" style={{ margin: 0 }}>
+                  {displayName}
+                </h1>
+                <button
+                  type="button"
+                  onClick={startEditingName}
+                  aria-label="Edit display name"
+                  style={{
+                    padding: "4px 8px",
+                    fontSize: "0.75rem",
+                    color: "var(--text-secondary)",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    borderRadius: "4px",
+                    transition: "color 0.15s, background 0.15s",
+                  }}
+                  className="profile-edit-name-btn"
+                >
+                  Edit
+                </button>
+              </div>
+              <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem" }}>
+                {user?.primaryEmailAddress?.emailAddress ?? ""}
+              </p>
+            </>
+          )}
         </div>
-      )}
+      </div>
+
+      {/* ── Duas Tabs ── */}
+      <div
+        className="glass-panel"
+        style={{ padding: 0, overflow: "hidden" }}
+      >
+        {/* Tab Bar */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            borderBottom: "1px solid var(--border-subtle)",
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => setActiveTab("mine")}
+            style={{
+              padding: "12px 16px",
+              fontSize: "0.85rem",
+              fontWeight: activeTab === "mine" ? 600 : 400,
+              color: activeTab === "mine" ? "var(--text-accent)" : "var(--text-secondary)",
+              background: "none",
+              border: "none",
+              borderBottom: activeTab === "mine" ? "2px solid var(--text-accent)" : "2px solid transparent",
+              cursor: "pointer",
+              transition: "color 0.15s, border-color 0.15s",
+              marginBottom: "-1px",
+            }}
+          >
+            My Duas
+            {duas.length > 0 && (
+              <span
+                style={{
+                  marginLeft: "6px",
+                  fontSize: "0.75rem",
+                  color: activeTab === "mine" ? "var(--text-accent)" : "var(--text-secondary)",
+                  opacity: 0.7,
+                }}
+              >
+                {duas.length}{result.status === "CanLoadMore" || result.status === "LoadingMore" ? "+" : ""}
+              </span>
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("ameen")}
+            style={{
+              padding: "12px 16px",
+              fontSize: "0.85rem",
+              fontWeight: activeTab === "ameen" ? 600 : 400,
+              color: activeTab === "ameen" ? "var(--text-accent)" : "var(--text-secondary)",
+              background: "none",
+              border: "none",
+              borderBottom: activeTab === "ameen" ? "2px solid var(--text-accent)" : "2px solid transparent",
+              cursor: "pointer",
+              transition: "color 0.15s, border-color 0.15s",
+              marginBottom: "-1px",
+            }}
+          >
+            Said Ameen
+            {ameenDuas.length > 0 && (
+              <span
+                style={{
+                  marginLeft: "6px",
+                  fontSize: "0.75rem",
+                  color: activeTab === "ameen" ? "var(--text-accent)" : "var(--text-secondary)",
+                  opacity: 0.7,
+                }}
+              >
+                {ameenDuas.length}{ameenResult.status === "CanLoadMore" || ameenResult.status === "LoadingMore" ? "+" : ""}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {/* Tab Content */}
+        {activeTab === "mine" && (
+          <>
+            {duas.length === 0 && result.status === "LoadingFirstPage" ? (
+              <p style={{ padding: "24px 16px", textAlign: "center", color: "var(--text-secondary)", fontSize: "0.85rem" }}>
+                Loading…
+              </p>
+            ) : duas.length === 0 ? (
+              <div style={{ padding: "32px 16px", textAlign: "center" }}>
+                <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem", marginBottom: "16px" }}>
+                  You haven&apos;t submitted any duas yet.
+                </p>
+                <Link href="/submit" className="btn-ameen" style={{ textDecoration: "none" }}>
+                  Share Your First Dua
+                </Link>
+              </div>
+            ) : (
+              <>
+                {duas.map((dua, i) => {
+                  const locationLabel =
+                    dua.visibility === "group"
+                      ? dua.groupName ?? "Private Group"
+                      : "Public Wall";
+                  return (
+                    <div
+                      key={dua._id}
+                      style={{
+                        padding: "12px 16px",
+                        borderTop: i === 0 ? "none" : "1px solid var(--border-subtle)",
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: "8px", marginBottom: "4px" }}>
+                        <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--text-accent)" }}>
+                          {locationLabel}
+                        </span>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                            flexShrink: 0,
+                          }}
+                        >
+                          {dua.isAnonymous ? (
+                            <span
+                              style={{
+                                fontSize: "0.68rem",
+                                color: "var(--text-secondary)",
+                                border: "1px solid var(--border-subtle)",
+                                borderRadius: "999px",
+                                padding: "2px 8px",
+                              }}
+                            >
+                              Anonymous
+                            </span>
+                          ) : null}
+                          <span style={{ fontSize: "0.72rem", color: "var(--text-secondary)" }}>
+                            {formatTimeAgo(dua.createdAt)}
+                          </span>
+                        </div>
+                      </div>
+                      <p
+                        style={{
+                          fontSize: "0.875rem",
+                          color: "var(--text-primary)",
+                          lineHeight: 1.5,
+                          display: "-webkit-box",
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: "vertical",
+                          overflow: "hidden",
+                        }}
+                      >
+                        {dua.text}
+                      </p>
+                      <p style={{ fontSize: "0.72rem", color: "var(--text-secondary)", marginTop: "6px" }}>
+                        {dua.ameen} {dua.ameen === 1 ? "Ameen" : "Ameens"}
+                      </p>
+                    </div>
+                  );
+                })}
+                {result.status === "CanLoadMore" && (
+                  <div style={{ padding: "12px 16px", borderTop: "1px solid var(--border-subtle)", textAlign: "center" }}>
+                    <button type="button" onClick={() => result.loadMore(10)} className="btn-ameen">
+                      Load More
+                    </button>
+                  </div>
+                )}
+                {result.status === "LoadingMore" && (
+                  <p style={{ padding: "12px 16px", textAlign: "center", color: "var(--text-secondary)", fontSize: "0.8rem" }}>
+                    Loading…
+                  </p>
+                )}
+              </>
+            )}
+          </>
+        )}
+
+        {activeTab === "ameen" && (
+          <>
+            {ameenDuas.length === 0 && ameenResult.status === "LoadingFirstPage" ? (
+              <p style={{ padding: "24px 16px", textAlign: "center", color: "var(--text-secondary)", fontSize: "0.85rem" }}>
+                Loading…
+              </p>
+            ) : ameenDuas.length === 0 ? (
+              <div style={{ padding: "32px 16px", textAlign: "center" }}>
+                <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem", marginBottom: "16px" }}>
+                  You haven&apos;t said Ameen to any duas yet.
+                </p>
+                <Link href="/" className="btn-ameen" style={{ textDecoration: "none" }}>
+                  Browse Duas
+                </Link>
+              </div>
+            ) : (
+              <>
+                {ameenDuas.map((dua, i) => {
+                  const displayName = getDuaDisplayName(dua);
+                  return (
+                    <div
+                      key={dua._id}
+                      style={{
+                        padding: "12px 16px",
+                        borderTop: i === 0 ? "none" : "1px solid var(--border-subtle)",
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: "8px", marginBottom: "4px" }}>
+                        <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--text-accent)" }}>
+                          {displayName}
+                        </span>
+                        <span style={{ fontSize: "0.72rem", color: "var(--text-secondary)", flexShrink: 0 }}>
+                          {formatTimeAgo(dua.createdAt)}
+                        </span>
+                      </div>
+                      <p
+                        style={{
+                          fontSize: "0.875rem",
+                          color: "var(--text-primary)",
+                          lineHeight: 1.5,
+                          display: "-webkit-box",
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: "vertical",
+                          overflow: "hidden",
+                        }}
+                      >
+                        {dua.text}
+                      </p>
+                      <p style={{ fontSize: "0.72rem", color: "var(--text-secondary)", marginTop: "6px" }}>
+                        {dua.ameen} {dua.ameen === 1 ? "Ameen" : "Ameens"}
+                      </p>
+                    </div>
+                  );
+                })}
+                {ameenResult.status === "CanLoadMore" && (
+                  <div style={{ padding: "12px 16px", borderTop: "1px solid var(--border-subtle)", textAlign: "center" }}>
+                    <button type="button" onClick={() => ameenResult.loadMore(10)} className="btn-ameen">
+                      Load More
+                    </button>
+                  </div>
+                )}
+                {ameenResult.status === "LoadingMore" && (
+                  <p style={{ padding: "12px 16px", textAlign: "center", color: "var(--text-secondary)", fontSize: "0.8rem" }}>
+                    Loading…
+                  </p>
+                )}
+              </>
+            )}
+          </>
+        )}
+      </div>
 
       {/* ── Legal + Footer ── */}
       <div style={{ marginTop: "48px" }}>
@@ -417,79 +593,31 @@ function SignedInProfile() {
             aria-label="Legal"
             style={{ display: "flex", flexDirection: "column", gap: "0" }}
           >
-            <Link href="/privacy" className="profile-legal-link">
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-              </svg>
-              <span>Privacy Policy</span>
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-                style={{ marginLeft: "auto", opacity: 0.4 }}
-              >
-                <path d="M9 18l6-6-6-6" />
-              </svg>
-            </Link>
-            <Link href="/terms" className="profile-legal-link">
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                <path d="M14 2v6h6" />
-                <line x1="16" y1="13" x2="8" y2="13" />
-                <line x1="16" y1="17" x2="8" y2="17" />
-                <line x1="10" y1="9" x2="8" y2="9" />
-              </svg>
-              <span>Terms of Use</span>
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-                style={{ marginLeft: "auto", opacity: 0.4 }}
-              >
-                <path d="M9 18l6-6-6-6" />
-              </svg>
-            </Link>
+            <LegalLinks />
           </nav>
         </div>
+        <button
+          type="button"
+          onClick={() => {
+            signOut().catch((err) => {
+              console.error("Sign out failed:", err);
+            });
+          }}
+          className="btn-sign-out"
+        >
+          Sign Out
+        </button>
       </div>
     </main>
   );
 }
 
-export default function ProfilePage() {
+type Props = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export default function ProfilePage({ searchParams }: Props) {
+  use(searchParams);
   return (
     <>
       <Show when="signed-out">

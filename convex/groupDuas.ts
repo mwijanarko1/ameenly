@@ -1,14 +1,28 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { paginationOptsValidator } from "convex/server";
-import { getConvexUserFromIdentity } from "./lib/auth";
+import { paginationOptsValidator, paginationResultValidator } from "convex/server";
+import { getConvexUserFromIdentity, getOrCreateConvexUser } from "./lib/auth";
 import { enforceAuthenticatedDuaRateLimit } from "./lib/duaRateLimits";
+
+const groupDuaValidator = v.object({
+  _id: v.id("duas"),
+  _creationTime: v.number(),
+  text: v.string(),
+  groupId: v.optional(v.id("groups")),
+  name: v.optional(v.string()),
+  isAnonymous: v.boolean(),
+  createdAt: v.number(),
+  ameen: v.number(),
+  authorName: v.optional(v.string()),
+  hasCurrentUserSaidAmeen: v.boolean(),
+});
 
 export const listGroupDuas = query({
   args: {
     groupId: v.id("groups"),
     paginationOpts: paginationOptsValidator,
   },
+  returns: paginationResultValidator(groupDuaValidator),
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity)
@@ -34,23 +48,32 @@ export const listGroupDuas = query({
       .order("desc")
       .paginate(args.paginationOpts);
 
+    const ameens = await ctx.db
+      .query("ameens")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .collect();
+    const excludeSet = new Set(ameens.map((a) => a.duaId));
+
     const pageWithAuthors = await Promise.all(
-      result.page.map(async (dua) => {
-        const author = dua.authorId
-          ? await ctx.db.get("users", dua.authorId)
-          : null;
-        const existing = await ctx.db
-          .query("ameens")
-          .withIndex("by_dua_and_user", (q) =>
-            q.eq("duaId", dua._id).eq("userId", user._id)
-          )
-          .first();
-        return {
-          ...dua,
-          authorName: author?.name ?? "Anonymous",
-          hasCurrentUserSaidAmeen: !!existing,
-        };
-      })
+      result.page
+        .filter((dua) => !excludeSet.has(dua._id))
+        .map(async (dua) => {
+          const author = dua.authorId
+            ? await ctx.db.get("users", dua.authorId)
+            : null;
+          return {
+            _id: dua._id,
+            _creationTime: dua._creationTime,
+            text: dua.text,
+            groupId: dua.groupId,
+            name: dua.name,
+            isAnonymous: dua.isAnonymous ?? false,
+            createdAt: dua.createdAt,
+            ameen: dua.ameen,
+            authorName: dua.isAnonymous ? undefined : author?.name,
+            hasCurrentUserSaidAmeen: false,
+          };
+        })
     );
 
     return {
@@ -64,13 +87,18 @@ export const submitGroupDua = mutation({
   args: {
     groupId: v.id("groups"),
     text: v.string(),
+    isAnonymous: v.boolean(),
   },
+  returns: v.id("duas"),
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
 
-    const user = await getConvexUserFromIdentity(ctx, identity.subject);
-    if (!user) throw new Error("User not found. Please complete sign-up.");
+    const user = await getOrCreateConvexUser(ctx, {
+      subject: identity.subject,
+      name: identity.name,
+      email: identity.email,
+    });
 
     const membership = await ctx.db
       .query("groupMembers")
@@ -91,6 +119,7 @@ export const submitGroupDua = mutation({
     return await ctx.db.insert("duas", {
       text: trimmedText,
       groupId: args.groupId,
+      isAnonymous: args.isAnonymous,
       authorId: user._id,
       createdAt: Date.now(),
       ameen: 0,
@@ -103,12 +132,16 @@ export const deleteGroupDua = mutation({
     groupId: v.id("groups"),
     duaId: v.id("duas"),
   },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
 
-    const user = await getConvexUserFromIdentity(ctx, identity.subject);
-    if (!user) throw new Error("User not found");
+    const user = await getOrCreateConvexUser(ctx, {
+      subject: identity.subject,
+      name: identity.name,
+      email: identity.email,
+    });
 
     const membership = await ctx.db
       .query("groupMembers")
@@ -127,5 +160,6 @@ export const deleteGroupDua = mutation({
     }
 
     await ctx.db.delete(args.duaId);
+    return null;
   },
 });

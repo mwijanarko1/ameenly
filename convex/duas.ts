@@ -2,12 +2,57 @@ import { v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { QueryCtx } from "./_generated/server";
 import { internalMutation, mutation, query } from "./_generated/server";
-import { paginationOptsValidator } from "convex/server";
-import { getConvexUserFromIdentity } from "./lib/auth";
+import { paginationOptsValidator, paginationResultValidator } from "convex/server";
+import {
+  getConvexUserFromIdentity,
+  getOrCreateConvexUser,
+  getOrCreateConvexUserFromClerkId,
+} from "./lib/auth";
 import {
   enforceAuthenticatedDuaRateLimit,
   enforceGuestPublicDuaRateLimit,
 } from "./lib/duaRateLimits";
+
+const publicDuaValidator = v.object({
+  _id: v.id("duas"),
+  _creationTime: v.number(),
+  text: v.string(),
+  groupId: v.optional(v.id("groups")),
+  name: v.optional(v.string()),
+  isAnonymous: v.boolean(),
+  createdAt: v.number(),
+  ameen: v.number(),
+  authorName: v.optional(v.string()),
+  hasCurrentUserSaidAmeen: v.boolean(),
+});
+
+const myDuaValidator = v.object({
+  _id: v.id("duas"),
+  _creationTime: v.number(),
+  text: v.string(),
+  groupId: v.optional(v.id("groups")),
+  name: v.optional(v.string()),
+  isAnonymous: v.boolean(),
+  createdAt: v.number(),
+  ameen: v.number(),
+  visibility: v.union(v.literal("group"), v.literal("public")),
+  groupName: v.optional(v.string()),
+  hasCurrentUserSaidAmeen: v.boolean(),
+});
+
+const ameenDuaValidator = v.object({
+  _id: v.id("duas"),
+  _creationTime: v.number(),
+  text: v.string(),
+  groupId: v.optional(v.id("groups")),
+  name: v.optional(v.string()),
+  isAnonymous: v.boolean(),
+  createdAt: v.number(),
+  ameen: v.number(),
+  authorName: v.optional(v.string()),
+  visibility: v.union(v.literal("group"), v.literal("public")),
+  groupName: v.optional(v.string()),
+});
 
 function normalizeDuaText(text: string) {
   const trimmedText = text.trim();
@@ -51,8 +96,15 @@ async function enrichPublicDuasWithAuthors(
         hasCurrentUserSaidAmeen = !!existing;
       }
       return {
-        ...dua,
-        authorName: author?.name,
+        _id: dua._id,
+        _creationTime: dua._creationTime,
+        text: dua.text,
+        groupId: dua.groupId,
+        name: dua.name,
+        isAnonymous: dua.isAnonymous ?? false,
+        createdAt: dua.createdAt,
+        ameen: dua.ameen,
+        authorName: dua.isAnonymous ? undefined : author?.name,
         hasCurrentUserSaidAmeen,
       };
     })
@@ -61,6 +113,7 @@ async function enrichPublicDuasWithAuthors(
 
 export const listPublicDuas = query({
   args: { paginationOpts: paginationOptsValidator },
+  returns: paginationResultValidator(publicDuaValidator),
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     const user = identity
@@ -73,9 +126,20 @@ export const listPublicDuas = query({
       .order("desc")
       .paginate(args.paginationOpts);
 
+    let page = await enrichPublicDuasWithAuthors(ctx, result.page, user?._id);
+
+    if (user) {
+      const ameens = await ctx.db
+        .query("ameens")
+        .withIndex("by_user", (q) => q.eq("userId", user._id))
+        .collect();
+      const excludeSet = new Set(ameens.map((a) => a.duaId));
+      page = page.filter((dua) => !excludeSet.has(dua._id));
+    }
+
     return {
       ...result,
-      page: await enrichPublicDuasWithAuthors(ctx, result.page, user?._id),
+      page,
     };
   },
 });
@@ -84,17 +148,25 @@ export const submitGuestPublicDua = mutation({
   args: {
     text: v.string(),
     name: v.optional(v.string()),
+    isAnonymous: v.boolean(),
     ipHash: v.string(),
   },
+  returns: v.id("duas"),
   handler: async (ctx, args) => {
     const trimmedText = normalizeDuaText(args.text);
     const trimmedName = normalizeOptionalName(args.name);
+    const isAnonymous = args.isAnonymous;
+
+    if (!isAnonymous && !trimmedName) {
+      throw new Error("Name is required unless you post anonymously");
+    }
 
     await enforceGuestPublicDuaRateLimit(ctx, args.ipHash);
 
     return await ctx.db.insert("duas", {
       text: trimmedText,
-      name: trimmedName || undefined,
+      name: isAnonymous ? undefined : trimmedName,
+      isAnonymous,
       ipHash: args.ipHash,
       createdAt: Date.now(),
       ameen: 0,
@@ -105,27 +177,28 @@ export const submitGuestPublicDua = mutation({
 export const submitAuthenticatedPublicDua = mutation({
   args: {
     text: v.string(),
-    name: v.optional(v.string()),
+    isAnonymous: v.boolean(),
   },
+  returns: v.id("duas"),
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new Error("Not authenticated");
     }
 
-    const user = await getConvexUserFromIdentity(ctx, identity.subject);
-    if (!user) {
-      throw new Error("User not found. Please complete sign-up.");
-    }
+    const user = await getOrCreateConvexUser(ctx, {
+      subject: identity.subject,
+      name: identity.name,
+      email: identity.email,
+    });
 
     const trimmedText = normalizeDuaText(args.text);
-    const trimmedName = normalizeOptionalName(args.name);
 
     await enforceAuthenticatedDuaRateLimit(ctx, user._id);
 
     return await ctx.db.insert("duas", {
       text: trimmedText,
-      name: trimmedName,
+      isAnonymous: args.isAnonymous,
       authorId: user._id,
       createdAt: Date.now(),
       ameen: 0,
@@ -137,22 +210,18 @@ export const submitAuthenticatedPublicDuaFromServer = internalMutation({
   args: {
     clerkId: v.string(),
     text: v.string(),
-    name: v.optional(v.string()),
+    isAnonymous: v.boolean(),
   },
   handler: async (ctx, args) => {
-    const user = await getConvexUserFromIdentity(ctx, args.clerkId);
-    if (!user) {
-      throw new Error("User not found. Please complete sign-up.");
-    }
+    const user = await getOrCreateConvexUserFromClerkId(ctx, args.clerkId);
 
     const trimmedText = normalizeDuaText(args.text);
-    const trimmedName = normalizeOptionalName(args.name);
 
     await enforceAuthenticatedDuaRateLimit(ctx, user._id);
 
     return await ctx.db.insert("duas", {
       text: trimmedText,
-      name: trimmedName,
+      isAnonymous: args.isAnonymous,
       authorId: user._id,
       createdAt: Date.now(),
       ameen: 0,
@@ -160,8 +229,63 @@ export const submitAuthenticatedPublicDuaFromServer = internalMutation({
   },
 });
 
+export const listDuasUserSaidAmeenTo = query({
+  args: { paginationOpts: paginationOptsValidator },
+  returns: paginationResultValidator(ameenDuaValidator),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return { page: [], isDone: true, continueCursor: "" };
+    }
+
+    const user = await getConvexUserFromIdentity(ctx, identity.subject);
+    if (!user) {
+      return { page: [], isDone: true, continueCursor: "" };
+    }
+
+    const result = await ctx.db
+      .query("ameens")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .order("desc")
+      .paginate(args.paginationOpts);
+
+    const page = await Promise.all(
+      result.page.map(async (ameen) => {
+        const dua = await ctx.db.get("duas", ameen.duaId);
+        if (!dua) return null;
+        const author = dua.authorId
+          ? await ctx.db.get("users", dua.authorId)
+          : null;
+        const group = dua.groupId ? await ctx.db.get("groups", dua.groupId) : null;
+        const visibility: "group" | "public" = dua.groupId ? "group" : "public";
+        return {
+          _id: dua._id,
+          _creationTime: dua._creationTime,
+          text: dua.text,
+          groupId: dua.groupId,
+          name: dua.name,
+          isAnonymous: dua.isAnonymous ?? false,
+          createdAt: dua.createdAt,
+          ameen: dua.ameen,
+          authorName: dua.isAnonymous ? undefined : author?.name,
+          visibility,
+          groupName: group?.name,
+        };
+      })
+    );
+
+    const filteredPage = page.filter((d): d is NonNullable<typeof d> => d !== null);
+
+    return {
+      ...result,
+      page: filteredPage,
+    };
+  },
+});
+
 export const listMyDuas = query({
   args: { paginationOpts: paginationOptsValidator },
+  returns: paginationResultValidator(myDuaValidator),
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
@@ -188,10 +312,18 @@ export const listMyDuas = query({
             q.eq("duaId", dua._id).eq("userId", user._id)
           )
           .first();
+        const visibility: "group" | "public" = dua.groupId ? "group" : "public";
 
         return {
-          ...dua,
-          visibility: dua.groupId ? "group" : "public",
+          _id: dua._id,
+          _creationTime: dua._creationTime,
+          text: dua.text,
+          groupId: dua.groupId,
+          name: dua.name,
+          isAnonymous: dua.isAnonymous ?? false,
+          createdAt: dua.createdAt,
+          ameen: dua.ameen,
+          visibility,
           groupName: group?.name,
           hasCurrentUserSaidAmeen: !!existing,
         };
@@ -207,16 +339,18 @@ export const listMyDuas = query({
 
 export const sayAmeen = mutation({
   args: { duaId: v.id("duas") },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new Error("Sign in to say Ameen");
     }
 
-    const user = await getConvexUserFromIdentity(ctx, identity.subject);
-    if (!user) {
-      throw new Error("User not found. Please complete sign-up.");
-    }
+    const user = await getOrCreateConvexUser(ctx, {
+      subject: identity.subject,
+      name: identity.name,
+      email: identity.email,
+    });
 
     const dua = await ctx.db.get("duas", args.duaId);
     if (!dua) {
@@ -239,5 +373,6 @@ export const sayAmeen = mutation({
       userId: user._id,
     });
     await ctx.db.patch(args.duaId, { ameen: dua.ameen + 1 });
+    return null;
   },
 });

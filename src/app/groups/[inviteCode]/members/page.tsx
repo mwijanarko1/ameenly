@@ -1,36 +1,35 @@
 "use client";
 
-import { useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { use, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useQuery } from "convex/react";
 import { api } from "convex/_generated/api";
-import type { Id } from "convex/_generated/dataModel";
 import Link from "next/link";
 import { InviteLink } from "@/components/InviteLink";
 import { MembersList } from "@/components/MembersList";
 
-export default function GroupMembersPage() {
-  const params = useParams();
+type Props = {
+  params: Promise<{ inviteCode: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export default function GroupMembersPage({ params, searchParams }: Props) {
+  const { inviteCode } = use(params);
+  use(searchParams);
   const router = useRouter();
-  const groupId = params.id as Id<"groups">;
-  const membershipData = useQuery(api.groups.getGroupWithMembership, {
-    groupId,
+  const membershipData = useQuery(api.groups.getGroupWithMembershipByInviteCode, {
+    inviteCode,
   });
-  const members = useQuery(api.groups.getGroupMembers, { groupId });
+  const members = useQuery(
+    api.groups.getGroupMembers,
+    membershipData?.group ? { groupId: membershipData.group._id } : "skip"
+  );
 
   useEffect(() => {
     if (membershipData === null) {
       router.replace("/groups");
-      return;
     }
-
-    if (
-      membershipData &&
-      (members === null || membershipData.membership.role !== "admin")
-    ) {
-      router.replace(`/groups/${groupId}`);
-    }
-  }, [groupId, members, membershipData, router]);
+  }, [membershipData, router]);
 
   if (membershipData === undefined || members === undefined) {
     return (
@@ -48,7 +47,7 @@ export default function GroupMembersPage() {
     );
   }
 
-  if (members === null || membershipData.membership.role !== "admin") {
+  if (members === null) {
     return (
       <div className="loading-screen">
         <p>Redirecting…</p>
@@ -56,7 +55,9 @@ export default function GroupMembersPage() {
     );
   }
 
-  const { group } = membershipData;
+  const { group, membership } = membershipData;
+  const groupId = group._id;
+  const isAdmin = membership.role === "admin";
 
   return (
     <main id="main-content" className="page-container">
@@ -68,14 +69,16 @@ export default function GroupMembersPage() {
           marginBottom: "32px",
         }}
       >
-        <h1 className="page-title">Manage Members</h1>
-        <Link href={`/groups/${groupId}`} className="top-bar-link">
+        <h1 className="page-title">
+          {isAdmin ? "Manage Members" : "Members"}
+        </h1>
+        <Link href={`/groups/${group.inviteCode}`} className="top-bar-link">
           ← Back to {group.name}
         </Link>
       </div>
 
       <div className="glass-panel" style={{ marginBottom: "24px" }}>
-        <InviteLink groupId={groupId} inviteCode={group.inviteCode} />
+        <InviteLink inviteCode={group.inviteCode} />
       </div>
 
       <div className="glass-panel">
@@ -92,7 +95,9 @@ export default function GroupMembersPage() {
         <MembersList
           groupId={groupId}
           members={members}
-          currentUserId={membershipData.membership.userId}
+          currentUserId={membership.userId}
+          canRemove={isAdmin}
+          canPromote={isAdmin}
         />
       </div>
     </main>

@@ -11,6 +11,7 @@ import { requireEnv } from "@/lib/env";
 const submitPublicDuaSchema = z.object({
   text: z.string().trim().min(1, "Dua text is required").max(2000),
   name: z.string().trim().max(100).optional(),
+  isAnonymous: z.boolean(),
 });
 
 async function getClientIp(): Promise<string> {
@@ -34,6 +35,7 @@ export async function submitPublicDua(formData: FormData) {
   const parsed = submitPublicDuaSchema.safeParse({
     text: formData.get("text"),
     name: formData.get("name") || undefined,
+    isAnonymous: formData.get("isAnonymous") === "true",
   });
 
   if (!parsed.success) {
@@ -48,6 +50,10 @@ export async function submitPublicDua(formData: FormData) {
   }
 
   const { userId } = await auth();
+
+  if (!userId && !parsed.data.isAnonymous && !parsed.data.name) {
+    return { error: "Name is required unless you post anonymously" };
+  }
 
   try {
     if (userId) {
@@ -64,7 +70,7 @@ export async function submitPublicDua(formData: FormData) {
         {
           clerkId: userId,
           text: parsed.data.text,
-          name: parsed.data.name || undefined,
+          isAnonymous: parsed.data.isAnonymous,
         }
       );
     } else {
@@ -75,6 +81,7 @@ export async function submitPublicDua(formData: FormData) {
       await client.mutation(api.duas.submitGuestPublicDua, {
         text: parsed.data.text,
         name: parsed.data.name || undefined,
+        isAnonymous: parsed.data.isAnonymous,
         ipHash,
       });
     }

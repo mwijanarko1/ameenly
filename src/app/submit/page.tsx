@@ -6,7 +6,12 @@ export const metadata = {
         "Share your dua on the public wall for others to say Ameen.",
 };
 
-export default function SubmitPage() {
+type Props = {
+    searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export default async function SubmitPage({ searchParams }: Props) {
+    await searchParams;
     return (
         <main
             id="main-content"

@@ -1,24 +1,19 @@
 "use client";
 
 import { useId, useState } from "react";
-import { useMutation } from "convex/react";
-import { api } from "convex/_generated/api";
-import type { Id } from "convex/_generated/dataModel";
-
 type InviteLinkProps = {
-  groupId: Id<"groups">;
   inviteCode: string;
 };
 
-export function InviteLink({ groupId, inviteCode }: InviteLinkProps) {
+export function InviteLink({ inviteCode }: InviteLinkProps) {
   const inputId = useId();
   const [copied, setCopied] = useState(false);
-  const generateNewCode = useMutation(api.groups.generateNewInviteCode);
   const invitePath = `/join/${inviteCode}`;
-  const inviteUrl =
-    process.env.NEXT_PUBLIC_APP_URL
-      ? `${process.env.NEXT_PUBLIC_APP_URL}${invitePath}`
-      : invitePath;
+  const inviteUrl = process.env.NEXT_PUBLIC_APP_URL
+    ? `${process.env.NEXT_PUBLIC_APP_URL}${invitePath}`
+    : typeof window === "undefined"
+      ? invitePath
+      : new URL(invitePath, window.location.origin).toString();
 
   async function handleCopy() {
     const shareUrl =
@@ -42,11 +37,6 @@ export function InviteLink({ groupId, inviteCode }: InviteLinkProps) {
     }
   }
 
-  async function handleRegenerate() {
-    await generateNewCode({ groupId });
-    setCopied(false);
-  }
-
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
       <label
@@ -60,7 +50,7 @@ export function InviteLink({ groupId, inviteCode }: InviteLinkProps) {
       >
         Invite link
       </label>
-      <div style={{ display: "flex", gap: "8px" }}>
+      <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
         <input
           id={inputId}
           aria-label="Invite link"
@@ -68,43 +58,25 @@ export function InviteLink({ groupId, inviteCode }: InviteLinkProps) {
           readOnly
           value={inviteUrl}
           className="form-input"
-          style={{ flex: 1, fontSize: "0.8rem" }}
+          style={{ flex: 1, minWidth: 0, fontSize: "0.9rem" }}
         />
         <button
           type="button"
           onClick={() => {
             void handleCopy();
           }}
-          className="btn-ameen"
+          className="btn-copy"
         >
           {copied ? "Copied!" : "Copy"}
         </button>
       </div>
-      <button
-        type="button"
-        onClick={() => {
-          void handleRegenerate();
-        }}
-        style={{
-          fontSize: "0.75rem",
-          color: "var(--text-accent)",
-          background: "transparent",
-          border: "none",
-          cursor: "pointer",
-          textAlign: "left",
-          padding: 0,
-          opacity: 0.8,
-        }}
-      >
-        Regenerate link
-      </button>
       <p
         style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}
         aria-live="polite"
       >
         {copied
           ? "Invite link copied to the clipboard."
-          : "Only invited members can use this link."}
+          : "Share this link with anyone you want to invite to the group."}
       </p>
     </div>
   );

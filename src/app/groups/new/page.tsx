@@ -1,9 +1,15 @@
 "use client";
 
+import { use } from "react";
 import Link from "next/link";
 import { CreateGroupForm } from "@/components/CreateGroupForm";
 
-export default function NewGroupPage() {
+type Props = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export default function NewGroupPage({ searchParams }: Props) {
+  use(searchParams);
   return (
     <main id="main-content" className="page-container">
       <div

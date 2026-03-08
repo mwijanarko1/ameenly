@@ -15,18 +15,29 @@ type MembersListProps = {
   groupId: Id<"groups">;
   members: Member[];
   currentUserId: Id<"users">;
+  canRemove?: boolean;
+  canPromote?: boolean;
 };
 
 export function MembersList({
   groupId,
   members,
   currentUserId,
+  canRemove = false,
+  canPromote = false,
 }: MembersListProps) {
   const removeMember = useMutation(api.groups.removeMember);
+  const promoteToAdmin = useMutation(api.groups.promoteToAdmin);
 
   async function handleRemove(userId: Id<"users">) {
     if (!confirm("Remove this member from the group?")) return;
     await removeMember({ groupId, userId });
+  }
+
+  async function handlePromote(userId: Id<"users">) {
+    if (!confirm("Make this member an admin? They will be able to approve requests and manage members."))
+      return;
+    await promoteToAdmin({ groupId, userId });
   }
 
   return (
@@ -57,26 +68,48 @@ export function MembersList({
               </span>
             )}
           </span>
-          {m.role === "member" && m.userId !== currentUserId && (
-            <button
-              type="button"
-              onClick={() => {
-                void handleRemove(m.userId);
-              }}
-              className="text-error"
-              style={{
-                fontSize: "0.75rem",
-                background: "transparent",
-                border: "none",
-                cursor: "pointer",
-                padding: "4px 8px",
-                borderRadius: "6px",
-              }}
-              aria-label={`Remove ${m.userName} from the group`}
-            >
-              Remove
-            </button>
-          )}
+          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+            {canPromote && m.role === "member" && m.userId !== currentUserId && (
+              <button
+                type="button"
+                onClick={() => {
+                  void handlePromote(m.userId);
+                }}
+                style={{
+                  fontSize: "0.75rem",
+                  color: "var(--text-accent)",
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: "4px 8px",
+                  borderRadius: "6px",
+                }}
+                aria-label={`Promote ${m.userName} to admin`}
+              >
+                Make admin
+              </button>
+            )}
+            {canRemove && m.role === "member" && m.userId !== currentUserId && (
+              <button
+                type="button"
+                onClick={() => {
+                  void handleRemove(m.userId);
+                }}
+                className="text-error"
+                style={{
+                  fontSize: "0.75rem",
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: "4px 8px",
+                  borderRadius: "6px",
+                }}
+                aria-label={`Remove ${m.userName} from the group`}
+              >
+                Remove
+              </button>
+            )}
+          </div>
         </li>
       ))}
     </ul>

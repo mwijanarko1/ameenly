@@ -3,7 +3,7 @@
 import { usePaginatedQuery } from "convex/react";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
-import { DuaCard } from "./DuaCard";
+import { DuaCard } from "@/components/DuaCard";
 
 type DuaWallProps =
   | {
@@ -74,6 +74,7 @@ type DuaWallContentProps = {
     text: string;
     name?: string;
     authorName?: string;
+    isAnonymous?: boolean;
     createdAt: number;
     ameen: number;
     hasCurrentUserSaidAmeen?: boolean;

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useUser } from "@clerk/nextjs";
 import { useMutation } from "convex/react";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
@@ -16,12 +17,19 @@ type SubmitDuaFormProps =
   };
 
 export function SubmitDuaForm(props: SubmitDuaFormProps) {
+  const { isSignedIn, user } = useUser();
   const [text, setText] = useState("");
   const [name, setName] = useState("");
+  const [isAnonymous, setIsAnonymous] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
   const submitGroupDua = useMutation(api.groupDuas.submitGroupDua);
+  const displayName =
+    [user?.firstName, user?.lastName].filter(Boolean).join(" ").trim() ||
+    "your profile";
+  const shouldShowGuestNameField =
+    props.mode === "public" && !isAnonymous && !isSignedIn;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -32,7 +40,10 @@ export function SubmitDuaForm(props: SubmitDuaFormProps) {
       if (props.mode === "public") {
         const formData = new FormData();
         formData.set("text", text);
-        if (name.trim()) formData.set("name", name.trim());
+        formData.set("isAnonymous", String(isAnonymous));
+        if (shouldShowGuestNameField && name.trim()) {
+          formData.set("name", name.trim());
+        }
         const result = await submitPublicDua(formData);
         if (result.error) {
           setError(result.error);
@@ -42,10 +53,13 @@ export function SubmitDuaForm(props: SubmitDuaFormProps) {
         await submitGroupDua({
           groupId: props.groupId,
           text: text.trim(),
+          isAnonymous,
         });
       }
       setText("");
-      if (props.mode === "public") setName("");
+      if (props.mode === "public") {
+        setName("");
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -60,21 +74,22 @@ export function SubmitDuaForm(props: SubmitDuaFormProps) {
       }}
       style={{ display: "flex", flexDirection: "column", gap: "12px" }}
     >
-      {props.mode === "public" && (
+      {shouldShowGuestNameField && (
         <div>
           <label htmlFor="dua-name" className="sr-only">
-            Your name (optional)
+            Your name
           </label>
           <input
             id="dua-name"
             name="name"
             type="text"
-            placeholder="Your name (optional)…"
+            placeholder="Your name…"
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="form-input"
             maxLength={100}
             autoComplete="name"
+            required={shouldShowGuestNameField}
           />
         </div>
       )}
@@ -103,6 +118,51 @@ export function SubmitDuaForm(props: SubmitDuaFormProps) {
         >
           {text.length}/2,000
         </p>
+      </div>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "8px",
+          borderRadius: "16px",
+          border: "1px solid var(--border-subtle)",
+          background: "rgba(255, 255, 255, 0.03)",
+          padding: "12px 14px",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "12px",
+          }}
+        >
+          <div style={{ minWidth: 0 }}>
+            <p style={{ fontSize: "0.9rem", fontWeight: 600 }}>
+              Post Anonymously
+            </p>
+            <p style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>
+              {isAnonymous
+                ? "Your name stays hidden on this dua."
+                : props.mode === "group"
+                  ? `Group members will see ${displayName}.`
+                  : isSignedIn
+                    ? `The public wall will show ${displayName}.`
+                    : "The public wall will show the name you enter below."}
+            </p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={isAnonymous}
+            aria-label="Post anonymously"
+            className="toggle-anonymous"
+            onClick={() => setIsAnonymous((currentValue) => !currentValue)}
+          >
+            <span aria-hidden="true" className="toggle-anonymous-thumb" />
+          </button>
+        </div>
       </div>
       {error && (
         <p className="text-error" style={{ fontSize: "0.8rem" }} role="alert" aria-live="polite">

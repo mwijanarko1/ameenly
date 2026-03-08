@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
-import Providers from "./providers";
+import Providers from "@/app/providers";
 import { getEnv } from "@/lib/env";
 import { FloatingTabBar } from "@/components/FloatingTabBar";
 
@@ -56,7 +56,12 @@ export default function RootLayout({
         <meta name="color-scheme" content="light dark" />
       </head>
       <body>
-        <ClerkProvider afterSignOutUrl="/">
+        <ClerkProvider
+          afterSignOutUrl="/"
+          signInUrl="/sign-in"
+          signUpUrl="/sign-up"
+          dynamic
+        >
           {/* ─── Background orbs ─── */}
           <div className="bg-orbs" aria-hidden="true" />
 
@@ -78,7 +83,12 @@ export default function RootLayout({
               Skip to main content
             </a>
 
-            <div style={{ position: "relative", zIndex: 1 }}>{children}</div>
+            <div
+              className="main-content-wrapper"
+              style={{ position: "relative", zIndex: 1 }}
+            >
+              {children}
+            </div>
 
             <FloatingTabBar />
           </Providers>

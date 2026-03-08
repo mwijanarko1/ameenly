@@ -1,10 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { SignInButton, useAuth } from "@clerk/nextjs";
+import Link from "next/link";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useAuth } from "@clerk/nextjs";
 import { useMutation } from "convex/react";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
+import { buildAuthHref, buildReturnPath } from "@/lib/authRedirect";
+import { getDuaDisplayName } from "@/lib/duaDisplay";
 
 function formatTimeAgo(ts: number): string {
   const diff = Date.now() - ts;
@@ -25,30 +29,31 @@ type PublicDua = {
   _id: Id<"duas">;
   text: string;
   name?: string;
+  authorName?: string;
+  isAnonymous?: boolean;
   createdAt: number;
   ameen: number;
   hasCurrentUserSaidAmeen?: boolean;
 };
 
-type GroupDua = PublicDua & {
-  authorName?: string;
-};
-
 type DuaCardProps = {
-  dua: PublicDua | GroupDua;
+  dua: PublicDua;
   onDelete?: () => void;
   canDelete?: boolean;
 };
 
 export function DuaCard({ dua, onDelete, canDelete }: DuaCardProps) {
   const { isSignedIn } = useAuth();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const sayAmeen = useMutation(api.duas.sayAmeen);
   const [isSubmittingAmeen, setIsSubmittingAmeen] = useState(false);
   const [ameenError, setAmeenError] = useState<string | null>(null);
-  const displayName =
-    "authorName" in dua && dua.authorName
-      ? dua.authorName
-      : dua.name?.trim() || "Anonymous";
+  const displayName = getDuaDisplayName(dua);
+  const signInHref = buildAuthHref(
+    "/sign-in",
+    buildReturnPath(pathname, searchParams.toString())
+  );
 
   async function handleSayAmeen() {
     try {
@@ -66,39 +71,18 @@ export function DuaCard({ dua, onDelete, canDelete }: DuaCardProps) {
 
   return (
     <article
-      className="glass-panel"
-      style={{ padding: "20px 24px" }}
+      className="glass-panel px-6 py-5"
       aria-label={`Dua from ${displayName}`}
     >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "space-between",
-          gap: "8px",
-        }}
-      >
-        <div style={{ minWidth: 0, flex: 1 }}>
-          <p style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-accent)" }}>
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <p className="text-[0.85rem] font-semibold text-[var(--text-accent)]">
             {displayName}
           </p>
-          <p
-            style={{
-              marginTop: "8px",
-              whiteSpace: "pre-wrap",
-              color: "var(--text-primary)",
-              lineHeight: 1.6,
-            }}
-          >
+          <p className="mt-2 whitespace-pre-wrap leading-[1.6] text-[var(--text-primary)]">
             {dua.text}
           </p>
-          <p
-            style={{
-              marginTop: "8px",
-              fontSize: "0.75rem",
-              color: "var(--text-secondary)",
-            }}
-          >
+          <p className="mt-2 text-[0.75rem] text-[var(--text-secondary)]">
             {formatTimeAgo(dua.createdAt)}
           </p>
         </div>
@@ -106,32 +90,14 @@ export function DuaCard({ dua, onDelete, canDelete }: DuaCardProps) {
           <button
             type="button"
             onClick={onDelete}
-            style={{
-              flexShrink: 0,
-              borderRadius: "8px",
-              padding: "4px 10px",
-              fontSize: "0.75rem",
-              background: "transparent",
-              border: "none",
-              cursor: "pointer",
-            }}
-            className="text-error"
+            className="dua-card-delete text-error"
             aria-label="Delete dua"
           >
             Delete
           </button>
         )}
       </div>
-      <div
-        style={{
-          marginTop: "12px",
-          display: "flex",
-          alignItems: "center",
-          gap: "10px",
-          paddingTop: "12px",
-          borderTop: "1px solid var(--border-subtle)",
-        }}
-      >
+      <div className="mt-3 flex items-center gap-2.5 border-t border-[var(--border-subtle)] pt-3">
         {isSignedIn ? (
           <button
             type="button"
@@ -148,11 +114,9 @@ export function DuaCard({ dua, onDelete, canDelete }: DuaCardProps) {
                 : "Say Ameen"}
           </button>
         ) : (
-          <SignInButton mode="modal">
-            <button type="button" className="btn-ameen">
-              Say Ameen
-            </button>
-          </SignInButton>
+          <Link href={signInHref} className="btn-ameen">
+            Say Ameen
+          </Link>
         )}
         <span className="ameen-count">
           {dua.ameen} {dua.ameen === 1 ? "Ameen" : "Ameens"}
@@ -160,8 +124,7 @@ export function DuaCard({ dua, onDelete, canDelete }: DuaCardProps) {
       </div>
       {ameenError ? (
         <p
-          className="text-error"
-          style={{ marginTop: "8px", fontSize: "0.8rem" }}
+          className="mt-2 text-[0.8rem] text-error"
           role="alert"
           aria-live="polite"
         >

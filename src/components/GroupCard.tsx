@@ -10,7 +10,7 @@ type GroupCardProps = {
 export function GroupCard({ group }: GroupCardProps) {
   return (
     <Link
-      href={`/groups/${group._id}`}
+      href={`/groups/${group.inviteCode}`}
       className="group-card"
     >
       <h3 style={{ fontWeight: 600, color: "var(--text-primary)" }}>{group.name}</h3>

@@ -19,11 +19,11 @@ export function CreateGroupForm() {
     setPending(true);
 
     try {
-      const groupId = await createGroup({
+      const { inviteCode } = await createGroup({
         name: name.trim(),
         description: description.trim() || undefined,
       });
-      router.push(`/groups/${groupId}`);
+      router.push(`/groups/${inviteCode}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {

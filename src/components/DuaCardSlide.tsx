@@ -1,10 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { SignInButton, useAuth } from "@clerk/nextjs";
+import Link from "next/link";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useAuth } from "@clerk/nextjs";
 import { useMutation } from "convex/react";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
+import { buildAuthHref, buildReturnPath } from "@/lib/authRedirect";
+import { getDuaDisplayName } from "@/lib/duaDisplay";
 
 function formatTimeAgo(ts: number): string {
     const diff = Date.now() - ts;
@@ -21,16 +25,13 @@ function formatTimeAgo(ts: number): string {
     }).format(new Date(ts));
 }
 
-function getInitial(name: string): string {
-    return name.trim().charAt(0).toUpperCase() || "?";
-}
-
 type DuaCardSlideProps = {
     dua: {
         _id: Id<"duas">;
         text: string;
         name?: string;
         authorName?: string;
+        isAnonymous?: boolean;
         createdAt: number;
         ameen: number;
         hasCurrentUserSaidAmeen?: boolean;
@@ -39,14 +40,17 @@ type DuaCardSlideProps = {
 
 export function DuaCardSlide({ dua }: DuaCardSlideProps) {
     const { isSignedIn } = useAuth();
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
     const sayAmeen = useMutation(api.duas.sayAmeen);
     const [isSubmittingAmeen, setIsSubmittingAmeen] = useState(false);
     const [ameenError, setAmeenError] = useState<string | null>(null);
 
-    const displayName =
-        "authorName" in dua && dua.authorName
-            ? dua.authorName
-            : dua.name?.trim() || "Anonymous";
+    const displayName = getDuaDisplayName(dua);
+    const signInHref = buildAuthHref(
+        "/sign-in",
+        buildReturnPath(pathname, searchParams.toString()),
+    );
 
     async function handleSayAmeen() {
         try {
@@ -62,24 +66,25 @@ export function DuaCardSlide({ dua }: DuaCardSlideProps) {
         }
     }
 
+    const hasSaidAmeen = dua.hasCurrentUserSaidAmeen;
+
     return (
         <article
             className="card-glass card-dua"
             aria-label={`Dua from ${displayName}`}
         >
             <div className="dua-author">
-                <div className="dua-avatar" aria-hidden="true">
-                    {getInitial(displayName)}
-                </div>
                 <div>
                     <p className="dua-name">{displayName}</p>
                     <p className="dua-time">{formatTimeAgo(dua.createdAt)}</p>
                 </div>
             </div>
 
-            <p className="dua-text">{dua.text}</p>
+            <div className="dua-body">
+                <p className="dua-text">{dua.text}</p>
+            </div>
 
-            <div className="dua-footer">
+            <div className="dua-cta">
                 {isSignedIn ? (
                     <button
                         type="button"
@@ -87,37 +92,35 @@ export function DuaCardSlide({ dua }: DuaCardSlideProps) {
                             e.stopPropagation();
                             void handleSayAmeen();
                         }}
-                        disabled={isSubmittingAmeen || dua.hasCurrentUserSaidAmeen}
-                        className="btn-ameen"
+                        disabled={isSubmittingAmeen || hasSaidAmeen}
+                        className={`btn-ameen${hasSaidAmeen ? " btn-ameen--said" : ""}`}
                     >
-                        {dua.hasCurrentUserSaidAmeen
+                        {hasSaidAmeen
                             ? "Ameen"
                             : isSubmittingAmeen
                                 ? "Saying Ameen…"
                                 : "Say Ameen"}
                     </button>
                 ) : (
-                    <SignInButton mode="modal">
-                        <button type="button" className="btn-ameen">
-                            Say Ameen
-                        </button>
-                    </SignInButton>
+                    <Link href={signInHref} className="btn-ameen">
+                        Say Ameen
+                    </Link>
                 )}
-                <span className="ameen-count">
+                
+                <p className="ameen-count-text">
                     {dua.ameen} {dua.ameen === 1 ? "Ameen" : "Ameens"}
-                </span>
-            </div>
-
-            {ameenError ? (
-                <p
-                    className="text-error"
-                    style={{ fontSize: "0.8rem", marginTop: "8px" }}
-                    role="alert"
-                    aria-live="polite"
-                >
-                    {ameenError}
                 </p>
-            ) : null}
+
+                {ameenError ? (
+                    <p
+                        className="text-error ameen-error"
+                        role="alert"
+                        aria-live="polite"
+                    >
+                        {ameenError}
+                    </p>
+                ) : null}
+            </div>
         </article>
     );
 }
