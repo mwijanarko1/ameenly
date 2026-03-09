@@ -15,12 +15,7 @@ export const metadata = {
     },
 };
 
-type Props = {
-    searchParams: Promise<Record<string, string | string[] | undefined>>;
-};
-
-export default async function SubmitPage({ searchParams }: Props) {
-    await searchParams;
+export default function SubmitPage() {
     return (
         <main
             id="main-content"
@@ -37,7 +32,7 @@ export default async function SubmitPage({ searchParams }: Props) {
             <div
                 style={{
                     width: "100%",
-                    maxWidth: "480px",
+                    maxWidth: "var(--standard-card-width)",
                 }}
             >
                 <SubmitDuaCard />

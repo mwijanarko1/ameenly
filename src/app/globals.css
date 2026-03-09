@@ -40,6 +40,8 @@
   --orb-2: rgba(220, 235, 250, 0.3);
   --scrollbar-thumb: rgba(43, 62, 87, 0.12);
   --scrollbar-thumb-hover: rgba(43, 62, 87, 0.2);
+  --standard-card-width: 472px;
+  --standard-card-height: 520px;
 }
 
 /* ══════════════════════════════════════════
@@ -77,6 +79,8 @@
     --orb-2: rgba(27, 43, 66, 0.4);
     --scrollbar-thumb: rgba(169, 188, 208, 0.12);
     --scrollbar-thumb-hover: rgba(169, 188, 208, 0.2);
+    --standard-card-width: 472px;
+    --standard-card-height: 520px;
   }
 }
 
@@ -278,6 +282,99 @@ body {
   }
 }
 
+/* Homepage: no scroll, everything fits in one viewport */
+.main-content-wrapper:has(.homepage-viewport) {
+  height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.homepage-viewport {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.homepage-main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.homepage-inner {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px 24px;
+  overflow: hidden;
+}
+
+.homepage-viewport .dua-deck-wrapper {
+  flex: 1;
+  min-height: 0;
+  padding: 0 16px 100px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+  width: 100%;
+}
+
+.homepage-viewport .swipe-deck-container {
+  flex: 0 0 auto;
+  padding: 12px 16px 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.homepage-viewport .swipe-deck-stack {
+  flex: 0 0 auto;
+  width: 100%;
+  max-width: var(--standard-card-width);
+  height: var(--standard-card-height) !important;
+  min-height: 0;
+  max-height: none;
+}
+
+@media (min-width: 768px) {
+  .homepage-viewport .dua-deck-wrapper {
+    padding: 0 24px 100px;
+  }
+
+  .homepage-viewport .swipe-deck-container {
+    padding: 20px 24px 24px;
+  }
+
+  .homepage-viewport .swipe-deck-stack {
+    height: var(--standard-card-height) !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .homepage-viewport .dua-deck-wrapper {
+    width: 100%;
+  }
+
+  .homepage-viewport .swipe-deck-container {
+    width: 100%;
+  }
+
+  .homepage-viewport .swipe-deck-stack {
+    height: var(--standard-card-height) !important;
+  }
+}
+
 /* Focus styles */
 *:focus-visible {
   outline: 2px solid var(--focus-ring);
@@ -325,7 +422,6 @@ body {
 .swipe-deck-container {
   position: relative;
   width: 100%;
-  max-width: 480px;
   margin: 0 auto;
   padding: 20px 16px 120px;
   min-height: 70dvh;
@@ -346,7 +442,8 @@ body {
 .swipe-deck-stack {
   position: relative;
   width: 100%;
-  height: 480px;
+  max-width: var(--standard-card-width);
+  height: var(--standard-card-height);
   perspective: 1200px;
 }
 
@@ -416,11 +513,11 @@ body {
 }
 
 .card-hero .brand-accent {
-  color: var(--text-accent);
+  color: var(--color-accent);
   /* Reset gradient approach — use solid accent */
   background: none;
   -webkit-background-clip: unset;
-  -webkit-text-fill-color: var(--text-accent);
+  -webkit-text-fill-color: var(--color-accent);
   background-clip: unset;
 }
 
@@ -445,32 +542,49 @@ body {
   align-items: center;
   gap: 24px;
   width: 100%;
-  max-width: 480px;
   margin: 0 auto;
   padding: 0 16px 120px;
 }
 
 @media (min-width: 768px) {
   .dua-deck-wrapper {
-    max-width: 520px;
     gap: 32px;
     padding: 0 24px 60px;
   }
 }
 
-@media (min-width: 1024px) {
-  .dua-deck-wrapper {
-    max-width: 560px;
-  }
-}
-
 .submit-section.card-submit {
   width: 100%;
-  max-width: 472px;
+  max-width: var(--standard-card-width);
+  height: var(--standard-card-height);
+  margin: 0 auto;
 }
 
 .card-submit {
   gap: 16px;
+}
+
+/* Shared card dimensions — matches public submit dua cards */
+.card-standard,
+.card-standard-size {
+  width: 100%;
+  max-width: var(--standard-card-width);
+  height: var(--standard-card-height);
+  margin: 0 auto;
+  padding: 28px 24px;
+  border-radius: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--card-shadow);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.card-standard-spread {
+  justify-content: space-between;
 }
 
 .card-submit h1,
@@ -681,10 +795,17 @@ body {
 
 /* ── Dua Card (Individual) ── */
 
+/* Matches public submit card dimensions when used in swipe deck */
+.card-standard-size {
+  width: 100%;
+  max-width: var(--standard-card-width);
+  min-height: var(--standard-card-height);
+}
+
 .card-dua {
   gap: 0;
   justify-content: space-between;
-  padding: 28px 28px 24px;
+  padding: 28px 24px;
 }
 
 .card-dua .dua-author {
@@ -827,13 +948,12 @@ body {
 
 @media (min-width: 768px) {
   .swipe-deck-container {
-    max-width: 520px;
     padding: 40px 24px 100px;
     min-height: 80dvh;
   }
 
   .swipe-deck-stack {
-    height: 540px;
+    height: var(--standard-card-height);
   }
 
   .swipe-nav-arrows {
@@ -875,14 +995,6 @@ body {
 }
 
 @media (min-width: 1024px) {
-  .swipe-deck-container {
-    max-width: 560px;
-  }
-
-  .swipe-deck-stack {
-    height: 580px;
-  }
-
   .swipe-nav-arrows {
     left: -88px;
     right: -88px;
@@ -1356,15 +1468,7 @@ body {
   animation: fade-up 0.8s ease-out;
 }
 
-.swipe-hint svg {
-  animation: float 2s ease-in-out infinite;
-}
 
-@media (min-width: 768px) {
-  .swipe-hint {
-    display: none;
-  }
-}
 
 /* ──────── Scrollbar ──────── */
 

@@ -96,10 +96,10 @@ export function DuaCard({ dua, onDelete, canDelete, canReport }: DuaCardProps) {
 
   return (
     <article
-      className="glass-panel px-6 py-5"
+      className="card-standard card-standard-spread"
       aria-label={displayName ? `Dua from ${displayName}` : "Dua"}
     >
-      <div className="flex items-start justify-between gap-2">
+      <div className="flex flex-1 items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
           {displayName ? (
             <p className="text-[0.85rem] font-semibold text-[var(--text-accent)]">

@@ -9,7 +9,7 @@ import { DuaCardSlide } from "@/components/DuaCardSlide";
 
 function HeroCard() {
   return (
-    <div className="card-glass card-hero">
+    <div className="card-glass card-hero card-standard-size">
       <Image
         src="/logo.png"
         alt="Ameenly — The Online Dua Wall"

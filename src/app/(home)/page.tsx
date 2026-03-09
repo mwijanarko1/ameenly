@@ -16,23 +16,10 @@ export const metadata: Metadata = {
   },
 };
 
-type Props = {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-};
-
-export default async function Home({ searchParams }: Props) {
-  await searchParams;
+export default function Home() {
   return (
-    <main id="main-content">
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: "24px",
-          paddingBottom: "24px",
-        }}
-      >
+    <main id="main-content" className="homepage-main">
+      <div className="homepage-inner">
         <DuaDeck mode="public" />
       </div>
     </main>

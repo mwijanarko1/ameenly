@@ -95,7 +95,7 @@ export function DuaCardSlide({ dua, canReport }: DuaCardSlideProps) {
 
     return (
         <article
-            className="card-glass card-dua"
+            className="card-glass card-dua card-standard-size"
             aria-label={displayName ? `Dua from ${displayName}` : "Dua"}
         >
             <div className="dua-author">

@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { SignIn } from "@clerk/nextjs";
-import { LegalLinks } from "@/components/LegalLinks";
 
 export const metadata = {
   title: "Sign In | Ameenly",
@@ -24,15 +23,6 @@ export default function SignInPage() {
           <Link href="/terms">Terms of Use</Link> and{" "}
           <Link href="/privacy">Privacy Policy</Link>.
         </p>
-        <div className="profile-legal-section auth-legal-below">
-          <h2 className="profile-legal-heading">Legal</h2>
-          <nav
-            aria-label="Legal"
-            style={{ display: "flex", flexDirection: "column", gap: 0 }}
-          >
-            <LegalLinks />
-          </nav>
-        </div>
       </div>
     </main>
   );

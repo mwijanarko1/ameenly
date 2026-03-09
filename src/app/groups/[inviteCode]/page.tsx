@@ -172,8 +172,16 @@ export default function GroupWallPage({ params, searchParams }: Props) {
           id="group-submit-panel"
           role="tabpanel"
           aria-labelledby="group-submit-tab"
+          style={{ display: "flex", justifyContent: "center", width: "100%" }}
         >
-          <div className="glass-panel">
+          <div className="card-glass card-submit submit-section">
+            <div>
+              <h2>Share with Your Group</h2>
+              <p className="submit-hint">
+                This dua stays inside {group.name}. Members can open it here and
+                say Ameen.
+              </p>
+            </div>
             <SubmitDuaForm mode="group" groupId={groupId} />
           </div>
         </div>

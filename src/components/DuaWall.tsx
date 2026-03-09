@@ -109,7 +109,14 @@ function DuaWallContent({
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "16px",
+        alignItems: "center",
+      }}
+    >
       {duas.map((dua) => (
         <DuaCard
           key={dua._id}
@@ -120,7 +127,15 @@ function DuaWallContent({
         />
       ))}
       {status === "CanLoadMore" && (
-        <div style={{ display: "flex", justifyContent: "center", paddingTop: "16px" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            paddingTop: "16px",
+            width: "100%",
+            maxWidth: "var(--standard-card-width)",
+          }}
+        >
           <button
             type="button"
             onClick={() => loadMore(10)}
