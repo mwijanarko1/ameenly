@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import Providers from "@/app/providers";
 import { getEnv } from "@/lib/env";
@@ -167,6 +168,7 @@ export default function RootLayout({
             <FloatingTabBar />
           </Providers>
         </ClerkProvider>
+        <Analytics />
       </body>
     </html>
   );
