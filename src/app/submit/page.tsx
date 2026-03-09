@@ -30,9 +30,12 @@ export default function SubmitPage() {
             }}
         >
             <div
+                className="submit-card-wrapper"
                 style={{
-                    width: "100%",
-                    maxWidth: "var(--standard-card-width)",
+                    width: "fit-content",
+                    maxWidth: "100%",
+                    display: "flex",
+                    justifyContent: "center",
                 }}
             >
                 <SubmitDuaCard />
