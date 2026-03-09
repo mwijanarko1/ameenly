@@ -556,8 +556,57 @@ body {
 .submit-section.card-submit {
   width: 100%;
   max-width: var(--standard-card-width);
-  height: var(--standard-card-height);
+  height: auto;
   margin: 0 auto;
+}
+
+/* Mobile: cap height so card fits viewport without scroll */
+@media (max-width: 767px) {
+  .submit-section.card-submit {
+    max-height: calc(100dvh - 180px);
+  }
+
+  .submit-section.card-submit.card-glass {
+    padding: 16px 18px;
+    gap: 10px;
+  }
+
+  .card-submit h1,
+  .card-submit h2 {
+    font-size: 1.1rem;
+    margin-bottom: 2px;
+  }
+
+  .card-submit .submit-hint {
+    font-size: 0.72rem;
+    margin-bottom: 6px;
+    line-height: 1.4;
+  }
+
+  .submit-dropdown {
+    margin-top: 10px;
+    padding-top: 10px;
+  }
+
+  .submit-dropdown-form {
+    gap: 8px;
+  }
+
+  .submit-dropdown-textarea {
+    min-height: 88px;
+  }
+
+  .card-submit .form-input {
+    padding: 10px 14px;
+    font-size: 0.875rem;
+  }
+
+  .card-submit .submit-form-actions .btn-primary,
+  .card-submit .submit-form-actions .btn-secondary {
+    padding: 12px 16px;
+    font-size: 0.9rem;
+  }
+
 }
 
 .card-submit {
@@ -768,6 +817,56 @@ body {
 
 .toggle-anonymous[aria-checked="true"] .toggle-anonymous-thumb {
   transform: translateX(20px);
+}
+
+/* Anonymous toggle block */
+.submit-anonymous-toggle {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-radius: 16px;
+  border: 1px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 12px 14px;
+}
+
+.submit-anonymous-toggle-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.submit-anonymous-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.submit-anonymous-desc {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin: 4px 0 0;
+}
+
+@media (max-width: 767px) {
+  .submit-anonymous-toggle {
+    padding: 10px 12px;
+    border-radius: 12px;
+  }
+
+  .submit-anonymous-toggle-inner {
+    gap: 10px;
+  }
+
+  .submit-anonymous-title {
+    font-size: 0.85rem;
+  }
+
+  .submit-anonymous-desc {
+    font-size: 0.7rem;
+    margin-top: 2px;
+  }
 }
 
 @keyframes submit-dropdown-enter {
@@ -1657,6 +1756,14 @@ code {
   max-width: 720px;
   margin: 0 auto;
   padding: 32px 16px 120px;
+}
+
+@media (max-width: 767px) {
+  .submit-page-main {
+    padding-top: 16px;
+    padding-bottom: 100px;
+    min-height: 100dvh;
+  }
 }
 
 .page-title {

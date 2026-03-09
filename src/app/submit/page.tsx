@@ -19,7 +19,7 @@ export default function SubmitPage() {
     return (
         <main
             id="main-content"
-            className="page-container"
+            className="page-container submit-page-main"
             style={{
                 display: "flex",
                 flexDirection: "column",

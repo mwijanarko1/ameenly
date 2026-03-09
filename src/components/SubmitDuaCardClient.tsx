@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
 import type { SubmitPublicDuaResult } from "@/app/actions/duas";
 import { sanitizeErrorMessage } from "@/lib/errorMessage";
@@ -21,6 +21,15 @@ export function SubmitDuaCardClient({ submitDua }: SubmitDuaCardClientProps) {
   >(null);
   const profileName = user?.fullName?.trim() || user?.firstName?.trim() || "your profile";
   const shouldShowGuestNameField = !isAnonymous && !isSignedIn;
+
+  const [textareaRows, setTextareaRows] = useState(5);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const update = () => setTextareaRows(mq.matches ? 3 : 5);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -115,42 +124,18 @@ export function SubmitDuaCardClient({ submitDua }: SubmitDuaCardClientProps) {
                   value={text}
                   onChange={(event) => setText(event.target.value)}
                   required
-                  rows={5}
+                  rows={textareaRows}
                   className="form-input form-textarea submit-dropdown-textarea"
                   maxLength={2000}
                 />
                 <p className="submit-dropdown-counter">{text.length}/2,000</p>
               </div>
 
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "8px",
-                  borderRadius: "16px",
-                  border: "1px solid var(--border-subtle)",
-                  background: "rgba(255, 255, 255, 0.03)",
-                  padding: "12px 14px",
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: "12px",
-                  }}
-                >
+              <div className="submit-anonymous-toggle">
+                <div className="submit-anonymous-toggle-inner">
                   <div style={{ minWidth: 0 }}>
-                    <p style={{ fontSize: "0.9rem", fontWeight: 600 }}>
-                      Post Anonymously
-                    </p>
-                    <p
-                      style={{
-                        fontSize: "0.75rem",
-                        color: "var(--text-secondary)",
-                      }}
-                    >
+                    <p className="submit-anonymous-title">Post Anonymously</p>
+                    <p className="submit-anonymous-desc">
                       {isAnonymous
                         ? "Your name stays hidden on this dua."
                         : isSignedIn
