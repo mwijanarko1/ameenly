@@ -26,21 +26,7 @@ function HeroCard() {
         Swipe through the public dua wall and say Ameen. Or submit your own dua for others to pray for.
       </p>
       <div className="swipe-hint">
-        <svg
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <path d="M5 12h14" />
-          <path d="m12 5 7 7-7 7" />
-        </svg>
-        <span>Swipe to browse duas</span>
+        <span>Swipe left to go next and swipe right to go back</span>
       </div>
     </div>
   );

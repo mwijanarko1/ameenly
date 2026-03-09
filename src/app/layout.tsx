@@ -9,7 +9,7 @@ const { NEXT_PUBLIC_APP_URL } = getEnv();
 const appUrl = NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
 const siteDescription =
-  "Ameenly is the free online dua wall where Muslims share duas and say Ameen for each other. Submit a prayer request, receive duas from the community, and join private dua circles. The dua wall you've been looking for — also known as DuaWall.";
+  "Ameenly is the free online dua wall where Muslims share duas and say Ameen for each other. Submit a prayer request, receive duas from the community, and join private dua circles.";
 
 const jsonLd = {
   "@context": "https://schema.org",

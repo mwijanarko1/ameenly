@@ -47,7 +47,8 @@ function buildCsp() {
     scriptSources.push("'unsafe-eval'");
   }
 
-  return [
+  const isProd = process.env.NODE_ENV === "production";
+  const parts = [
     "default-src 'self'",
     `script-src ${scriptSources.join(" ")}`,
     "style-src 'self' 'unsafe-inline'",
@@ -60,8 +61,11 @@ function buildCsp() {
     "object-src 'none'",
     "base-uri 'self'",
     "worker-src 'self' blob:",
-    "upgrade-insecure-requests",
-  ].join("; ");
+  ];
+  if (isProd) {
+    parts.push("upgrade-insecure-requests");
+  }
+  return parts.join("; ");
 }
 
 const nextConfig = {

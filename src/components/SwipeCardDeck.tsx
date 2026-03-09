@@ -19,9 +19,13 @@ type SwipeCardDeckProps = {
   onCardChange?: (index: number) => void;
 };
 
+type SwipeDirection = "left" | "right";
+
 const SWIPE_THRESHOLD = 80;
 const VELOCITY_THRESHOLD = 0.5;
 const SPRING_DURATION = 400;
+const SPRING_EASING = "cubic-bezier(0.32, 0.72, 0, 1)";
+const SPRING_TRANSITION = `transform ${SPRING_DURATION}ms ${SPRING_EASING}`;
 
 export function SwipeCardDeck({
   children,
@@ -54,22 +58,21 @@ export function SwipeCardDeck({
     [totalCards, isAnimating, onCardChange]
   );
 
-  const animateExit = useCallback(
-    (direction: "left" | "right") => {
+  const animateSwipe = useCallback(
+    (direction: SwipeDirection, targetIndex: number) => {
       setIsAnimating(true);
       setExitDirection(direction);
       onSwipe?.(direction, currentIndex);
 
       setTimeout(() => {
-        const nextIndex = Math.min(currentIndex + 1, totalCards - 1);
-        setCurrentIndex(nextIndex);
+        setCurrentIndex(targetIndex);
         setExitDirection(null);
         setDragX(0);
         setIsAnimating(false);
-        onCardChange?.(nextIndex);
+        onCardChange?.(targetIndex);
       }, SPRING_DURATION);
     },
-    [currentIndex, totalCards, onSwipe, onCardChange]
+    [currentIndex, onSwipe, onCardChange]
   );
 
   const snapBack = useCallback(() => {
@@ -109,7 +112,7 @@ export function SwipeCardDeck({
     if (!isDragging) return;
     setIsDragging(false);
 
-    const elapsed = Date.now() - startTimeRef.current;
+    const elapsed = Math.max(Date.now() - startTimeRef.current, 1);
     const velocity = Math.abs(currentXRef.current) / elapsed;
 
     if (
@@ -119,18 +122,9 @@ export function SwipeCardDeck({
       const direction = currentXRef.current > 0 ? "right" : "left";
 
       if (direction === "left" && currentIndex < totalCards - 1) {
-        animateExit("left");
+        animateSwipe("left", Math.min(currentIndex + 1, totalCards - 1));
       } else if (direction === "right" && currentIndex > 0) {
-        /* Swipe right goes to prev card */
-        setIsAnimating(true);
-        setExitDirection("right");
-        setTimeout(() => {
-          setCurrentIndex(Math.max(currentIndex - 1, 0));
-          setExitDirection(null);
-          setDragX(0);
-          setIsAnimating(false);
-          onCardChange?.(Math.max(currentIndex - 1, 0));
-        }, SPRING_DURATION);
+        animateSwipe("right", Math.max(currentIndex - 1, 0));
       } else {
         snapBack();
       }
@@ -141,9 +135,8 @@ export function SwipeCardDeck({
     isDragging,
     currentIndex,
     totalCards,
-    animateExit,
+    animateSwipe,
     snapBack,
-    onCardChange,
   ]);
 
   /* Touch events */
@@ -210,6 +203,32 @@ export function SwipeCardDeck({
   function getCardStyle(index: number) {
     const offset = index - currentIndex;
     const isActive = offset === 0;
+    const nextCardProgress =
+      exitDirection === "left"
+        ? 1
+        : dragX < 0
+          ? Math.min(Math.abs(dragX) / 200, 1)
+          : 0;
+    const previousCardProgress =
+      exitDirection === "right"
+        ? 1
+        : dragX > 0
+          ? Math.min(dragX / 200, 1)
+          : 0;
+
+    if (offset === -1) {
+      const translateX = -32 + previousCardProgress * 32;
+
+      return {
+        transform: `translateX(${translateX}px)`,
+        transition: isDragging
+          ? "none"
+          : SPRING_TRANSITION,
+        zIndex: 9,
+        opacity: previousCardProgress === 0 ? 0 : 0.7 + previousCardProgress * 0.3,
+        pointerEvents: "none" as const,
+      };
+    }
 
     if (isActive) {
       const rotation = (dragX / 20) * (isDragging ? 1 : 0);
@@ -227,7 +246,7 @@ export function SwipeCardDeck({
         transform: `translateX(${x}px) rotate(${r}deg)`,
         transition:
           isAnimating && !isDragging
-            ? `transform ${SPRING_DURATION}ms cubic-bezier(0.32, 0.72, 0, 1)`
+            ? SPRING_TRANSITION
             : "none",
         zIndex: 10,
         opacity: 1,
@@ -235,24 +254,23 @@ export function SwipeCardDeck({
     }
 
     if (offset === 1) {
-      const progress = Math.min(Math.abs(dragX) / 200, 1);
-      const scale = 0.92 + progress * 0.08;
-      const translateY = 20 - progress * 20;
+      const scale = 0.92 + nextCardProgress * 0.08;
+      const translateY = 20 - nextCardProgress * 20;
 
       return {
         transform: `scale(${scale}) translateY(${translateY}px)`,
         transition: isDragging
           ? "none"
-          : `transform ${SPRING_DURATION}ms cubic-bezier(0.32, 0.72, 0, 1)`,
+          : SPRING_TRANSITION,
         zIndex: 5,
-        opacity: 0.7 + progress * 0.3,
+        opacity: 0.7 + nextCardProgress * 0.3,
       };
     }
 
     if (offset === 2) {
       return {
         transform: "scale(0.84) translateY(40px)",
-        transition: `transform ${SPRING_DURATION}ms cubic-bezier(0.32, 0.72, 0, 1)`,
+        transition: SPRING_TRANSITION,
         zIndex: 1,
         opacity: 0.4,
       };
@@ -278,7 +296,10 @@ export function SwipeCardDeck({
   }
 
   /* Only render nearby cards for performance */
-  const visibleRange = { start: currentIndex, end: Math.min(currentIndex + 3, totalCards) };
+  const visibleRange = {
+    start: Math.max(currentIndex - 1, 0),
+    end: Math.min(currentIndex + 3, totalCards),
+  };
 
   return (
     <div
