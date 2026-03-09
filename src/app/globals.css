@@ -248,6 +248,7 @@
 
 html {
   color-scheme: light dark;
+  background: var(--bg-deep);
 }
 
 body {
