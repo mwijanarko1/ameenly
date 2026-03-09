@@ -4,6 +4,10 @@ import type { Id } from "./_generated/dataModel";
 import { action, internalMutation, internalQuery, mutation, query } from "./_generated/server";
 import { paginationOptsValidator, paginationResultValidator } from "convex/server";
 import { api, internal } from "./_generated/api";
+import {
+  normalizeReportCount,
+  normalizeReportedDuaRecord,
+} from "./lib/adminModeration";
 import { getSiteAdminByClerkId, requireSiteAdmin } from "./lib/siteAdminAuth";
 
 export const isSiteAdmin = query({
@@ -173,7 +177,7 @@ export const getAdminStats = query({
     const reportedDuas = duas.filter(
       (d) =>
         d.groupId === undefined &&
-        (d.reportCount ?? 0) >= 1
+        normalizeReportCount(d.reportCount) >= 1
     );
 
     return {
@@ -285,36 +289,28 @@ export const listReportedDuas = query({
       return { isAuthorized: false, reportedDuas: [] };
     }
 
-    // Use by_report_count index (undefined is not valid in Convex index eq())
     const reportedDuas = await ctx.db
       .query("duas")
-      .withIndex("by_report_count", (q) => q.gte("reportCount", 1))
-      .order("desc")
       .collect()
       .then((duas) =>
         duas
-          .filter((d) => d.groupId === undefined)
-          .sort((a, b) => (b.reportCount ?? 0) - (a.reportCount ?? 0))
+          .filter(
+            (dua) =>
+              dua.groupId === undefined &&
+              normalizeReportCount(dua.reportCount) >= 1
+          )
+          .sort(
+            (left, right) =>
+              normalizeReportCount(right.reportCount) -
+              normalizeReportCount(left.reportCount)
+          )
           .slice(0, 100)
       );
 
     const page = await Promise.all(
       reportedDuas.map(async (dua) => {
         const author = dua.authorId ? await ctx.db.get(dua.authorId) : null;
-        return {
-          _id: dua._id,
-          _creationTime: dua._creationTime,
-          text: dua.text,
-          name: dua.name,
-          isAnonymous: dua.isAnonymous ?? false,
-          createdAt: dua.createdAt,
-          ameen: dua.ameen,
-          reportCount: dua.reportCount ?? 0,
-          reportReasons: dua.reportReasons ?? [],
-          moderationStatus: dua.moderationStatus,
-          authorName: dua.isAnonymous ? undefined : author?.name,
-          isGuest: dua.authorId === undefined,
-        };
+        return normalizeReportedDuaRecord(dua, author?.name);
       })
     );
 
@@ -466,7 +462,7 @@ async function getReportedPublicDuaOrThrow(
   const dua = await ctx.db.get(duaId);
   if (!dua) throw new Error("Dua not found");
   if (dua.groupId !== undefined) throw new Error("Only public duas can be resolved here");
-  if ((dua.reportCount ?? 0) < 1) throw new Error("Dua has no reports");
+  if (normalizeReportCount(dua.reportCount) < 1) throw new Error("Dua has no reports");
   return dua;
 }
 

@@ -12,6 +12,7 @@ import type * as adminModeration from "../adminModeration.js";
 import type * as duas from "../duas.js";
 import type * as groupDuas from "../groupDuas.js";
 import type * as groups from "../groups.js";
+import type * as lib_adminModeration from "../lib/adminModeration.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_duaRateLimits from "../lib/duaRateLimits.js";
 import type * as lib_guestModeration from "../lib/guestModeration.js";
@@ -30,6 +31,7 @@ declare const fullApi: ApiFromModules<{
   duas: typeof duas;
   groupDuas: typeof groupDuas;
   groups: typeof groups;
+  "lib/adminModeration": typeof lib_adminModeration;
   "lib/auth": typeof lib_auth;
   "lib/duaRateLimits": typeof lib_duaRateLimits;
   "lib/guestModeration": typeof lib_guestModeration;
