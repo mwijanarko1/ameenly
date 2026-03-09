@@ -15,6 +15,7 @@ import {
 import { useQuery } from "convex/react";
 import { buildAuthHref } from "@/lib/authRedirect";
 import { getDuaDisplayName } from "@/lib/duaDisplay";
+import { sanitizeErrorMessage } from "@/lib/errorMessage";
 import { LegalLinks } from "@/components/LegalLinks";
 
 function formatTimeAgo(timestamp: number) {
@@ -170,6 +171,7 @@ function SignedInProfile() {
   const [draftName, setDraftName] = useState("");
   const [nameError, setNameError] = useState<string | null>(null);
   const [isSavingName, setIsSavingName] = useState(false);
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -231,7 +233,7 @@ function SignedInProfile() {
       setIsEditingName(false);
       setDraftName("");
     } catch (err) {
-      setNameError(err instanceof Error ? err.message : "Failed to update name");
+      setNameError(sanitizeErrorMessage(err, "Failed to update name"));
     } finally {
       setIsSavingName(false);
     }
@@ -251,7 +253,7 @@ function SignedInProfile() {
       await signOut();
       router.push("/");
     } catch (err) {
-      setDeleteError(err instanceof Error ? err.message : "Failed to delete account");
+      setDeleteError(sanitizeErrorMessage(err, "Failed to delete account"));
     } finally {
       setIsDeleting(false);
     }
@@ -637,21 +639,62 @@ function SignedInProfile() {
             <LegalLinks />
           </nav>
         </div>
-        <button
-          type="button"
-          onClick={() => {
-            signOut().catch((err) => {
-              console.error("Sign out failed:", err);
-            });
-          }}
-          className="btn-sign-out"
-        >
-          Sign Out
-        </button>
-        {showDeleteConfirm ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px", marginTop: "12px" }}>
+          {showSignOutConfirm ? (
+            <div
+              style={{
+                padding: "16px",
+                borderRadius: "12px",
+                border: "1px solid var(--border-subtle)",
+                background: "color-mix(in srgb, var(--color-sign-out) 8%, var(--bg-deep))",
+              }}
+            >
+              <p
+                style={{
+                  fontSize: "0.85rem",
+                  color: "var(--text-primary)",
+                  marginBottom: "12px",
+                  lineHeight: 1.5,
+                }}
+              >
+                Are you sure you want to sign out?
+              </p>
+              <div style={{ display: "flex", gap: "12px" }}>
+                <button
+                  type="button"
+                  onClick={() => setShowSignOutConfirm(false)}
+                  className="btn-secondary"
+                  style={{ flex: 1, padding: "12px 16px", fontSize: "0.85rem", marginTop: 0 }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    signOut().catch((err) => {
+                      console.error("Sign out failed:", err);
+                    });
+                    setShowSignOutConfirm(false);
+                  }}
+                  className="btn-sign-out"
+                  style={{ flex: 1, padding: "12px 16px", fontSize: "0.85rem", marginTop: 0 }}
+                >
+                  Yes, sign out
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowSignOutConfirm(true)}
+              className="btn-sign-out"
+            >
+              Sign Out
+            </button>
+          )}
+          {showDeleteConfirm ? (
           <div
             style={{
-              marginTop: "24px",
               padding: "16px",
               borderRadius: "12px",
               border: "1px solid var(--border-subtle)",
@@ -682,7 +725,7 @@ function SignedInProfile() {
                 }}
                 disabled={isDeleting}
                 className="btn-secondary"
-                style={{ padding: "10px 16px", fontSize: "0.85rem" }}
+                style={{ flex: 1, padding: "12px 16px", fontSize: "0.85rem", marginTop: 0 }}
               >
                 Cancel
               </button>
@@ -691,7 +734,8 @@ function SignedInProfile() {
                 onClick={handleDeleteAccount}
                 disabled={isDeleting}
                 style={{
-                  padding: "10px 16px",
+                  flex: 1,
+                  padding: "12px 16px",
                   fontSize: "0.85rem",
                   borderRadius: "14px",
                   fontWeight: 600,
@@ -715,6 +759,7 @@ function SignedInProfile() {
             Delete Account
           </button>
         )}
+        </div>
       </div>
     </main>
   );

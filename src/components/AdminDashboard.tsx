@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useAction, useMutation, usePaginatedQuery, useQuery } from "convex/react";
+import { sanitizeErrorMessage } from "@/lib/errorMessage";
 import { useUser } from "@clerk/nextjs";
 import type { Id } from "convex/_generated/dataModel";
 import { api } from "convex/_generated/api";
@@ -85,9 +86,7 @@ export function AdminDashboard() {
       await updatePublicDua({ duaId: editingDuaId, text: editingText });
       cancelEditingDua();
     } catch (error) {
-      setActionError(
-        error instanceof Error ? error.message : "Failed to update dua."
-      );
+      setActionError(sanitizeErrorMessage(error, "Failed to update dua."));
     }
   }
 
@@ -104,9 +103,7 @@ export function AdminDashboard() {
     try {
       await deleteUserAndData({ userId, clerkId });
     } catch (error) {
-      setDeleteUserError(
-        error instanceof Error ? error.message : "Failed to delete user."
-      );
+      setDeleteUserError(sanitizeErrorMessage(error, "Failed to delete user."));
     } finally {
       setDeletingUserId(null);
     }
@@ -126,9 +123,7 @@ export function AdminDashboard() {
       }
     } catch (error) {
       setActionError(
-        error instanceof Error
-          ? error.message
-          : "Unable to update moderation status."
+        sanitizeErrorMessage(error, "Unable to update moderation status.")
       );
     } finally {
       setActiveDuaId(null);
@@ -144,9 +139,7 @@ export function AdminDashboard() {
     try {
       await resolveReportedDua({ duaId, action });
     } catch (error) {
-      setActionError(
-        error instanceof Error ? error.message : "Unable to resolve report."
-      );
+      setActionError(sanitizeErrorMessage(error, "Unable to resolve report."));
     } finally {
       setResolvingReportId(null);
     }

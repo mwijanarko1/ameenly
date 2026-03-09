@@ -9,6 +9,7 @@ import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
 import { buildAuthHref, buildReturnPath } from "@/lib/authRedirect";
 import { getDuaDisplayName } from "@/lib/duaDisplay";
+import { sanitizeErrorMessage } from "@/lib/errorMessage";
 import { ReportModal } from "@/components/ReportModal";
 import type { ReportReason } from "@/lib/reportReasons";
 
@@ -37,6 +38,7 @@ type DuaCardSlideProps = {
         createdAt: number;
         ameen: number;
         hasCurrentUserSaidAmeen?: boolean;
+        hasCurrentUserReported?: boolean;
     };
     canReport?: boolean;
 };
@@ -65,9 +67,7 @@ export function DuaCardSlide({ dua, canReport }: DuaCardSlideProps) {
             setIsSubmittingAmeen(true);
             await sayAmeen({ duaId: dua._id });
         } catch (error) {
-            setAmeenError(
-                error instanceof Error ? error.message : "Could not say Ameen."
-            );
+            setAmeenError(sanitizeErrorMessage(error, "Could not say Ameen."));
         } finally {
             setIsSubmittingAmeen(false);
         }
@@ -80,8 +80,11 @@ export function DuaCardSlide({ dua, canReport }: DuaCardSlideProps) {
             await reportDua({ duaId: dua._id, reason });
             setShowReportModal(false);
         } catch (error) {
+            const msg = sanitizeErrorMessage(error, "Could not report dua.");
             setReportError(
-                error instanceof Error ? error.message : "Could not report dua."
+                msg.toLowerCase().includes("already reported")
+                    ? "You've already reported this dua."
+                    : msg
             );
         } finally {
             setIsReporting(false);
@@ -104,20 +107,31 @@ export function DuaCardSlide({ dua, canReport }: DuaCardSlideProps) {
                         <p className="dua-time">{formatTimeAgo(dua.createdAt)}</p>
                     ) : null}
                 </div>
-                {canReport && isSignedIn && (
-                    <button
-                        type="button"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            setShowReportModal(true);
-                        }}
-                        disabled={isReporting}
-                        className="dua-report-btn"
-                        aria-label="Report dua"
-                    >
-                        Report
-                    </button>
-                )}
+                {canReport &&
+                    !dua.hasCurrentUserReported &&
+                    (isSignedIn ? (
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setShowReportModal(true);
+                            }}
+                            disabled={isReporting}
+                            className="dua-report-btn"
+                            aria-label="Report dua"
+                        >
+                            Report
+                        </button>
+                    ) : (
+                        <Link
+                            href={signInHref}
+                            className="dua-report-btn"
+                            aria-label="Sign in to report dua"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            Report
+                        </Link>
+                    ))}
             </div>
 
             <div className="dua-body">

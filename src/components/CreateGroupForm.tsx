@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useMutation } from "convex/react";
 import { useRouter } from "next/navigation";
 import { api } from "convex/_generated/api";
+import { sanitizeErrorMessage } from "@/lib/errorMessage";
 
 export function CreateGroupForm() {
   const [name, setName] = useState("");
@@ -25,7 +26,7 @@ export function CreateGroupForm() {
       });
       router.push(`/groups/${inviteCode}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
+      setError(sanitizeErrorMessage(err, "Something went wrong. Please try again."));
     } finally {
       setPending(false);
     }

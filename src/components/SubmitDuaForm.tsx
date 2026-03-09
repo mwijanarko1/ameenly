@@ -9,6 +9,7 @@ import {
   submitPublicDua,
   type SubmitPublicDuaResult,
 } from "@/app/actions/duas";
+import { sanitizeErrorMessage } from "@/lib/errorMessage";
 
 type SubmitDuaFormProps =
   | {
@@ -72,7 +73,7 @@ export function SubmitDuaForm(props: SubmitDuaFormProps) {
         setName("");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
+      setError(sanitizeErrorMessage(err, "Something went wrong. Please try again."));
     } finally {
       setPending(false);
     }

@@ -9,6 +9,7 @@ import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
 import { buildAuthHref, buildReturnPath } from "@/lib/authRedirect";
 import { getDuaDisplayName } from "@/lib/duaDisplay";
+import { sanitizeErrorMessage } from "@/lib/errorMessage";
 import { ReportModal } from "@/components/ReportModal";
 import type { ReportReason } from "@/lib/reportReasons";
 
@@ -36,6 +37,7 @@ type PublicDua = {
   createdAt: number;
   ameen: number;
   hasCurrentUserSaidAmeen?: boolean;
+  hasCurrentUserReported?: boolean;
 };
 
 type DuaCardProps = {
@@ -68,9 +70,7 @@ export function DuaCard({ dua, onDelete, canDelete, canReport }: DuaCardProps) {
       setIsSubmittingAmeen(true);
       await sayAmeen({ duaId: dua._id });
     } catch (error) {
-      setAmeenError(
-        error instanceof Error ? error.message : "Could not say Ameen."
-      );
+      setAmeenError(sanitizeErrorMessage(error, "Could not say Ameen."));
     } finally {
       setIsSubmittingAmeen(false);
     }
@@ -83,8 +83,11 @@ export function DuaCard({ dua, onDelete, canDelete, canReport }: DuaCardProps) {
       await reportDua({ duaId: dua._id, reason });
       setShowReportModal(false);
     } catch (error) {
+      const msg = sanitizeErrorMessage(error, "Could not report dua.");
       setReportError(
-        error instanceof Error ? error.message : "Could not report dua."
+        msg.toLowerCase().includes("already reported")
+          ? "You've already reported this dua."
+          : msg
       );
     } finally {
       setIsReporting(false);
@@ -111,17 +114,27 @@ export function DuaCard({ dua, onDelete, canDelete, canReport }: DuaCardProps) {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {canReport && isSignedIn && (
-            <button
-              type="button"
-              onClick={() => setShowReportModal(true)}
-              disabled={isReporting}
-              className="text-[0.75rem] text-[var(--text-secondary)] hover:text-[var(--text-primary)] disabled:opacity-50"
-              aria-label="Report dua"
-            >
-              Report
-            </button>
-          )}
+          {canReport &&
+            !dua.hasCurrentUserReported &&
+            (isSignedIn ? (
+              <button
+                type="button"
+                onClick={() => setShowReportModal(true)}
+                disabled={isReporting}
+                className="text-[0.75rem] text-[var(--text-secondary)] hover:text-[var(--text-primary)] disabled:opacity-50"
+                aria-label="Report dua"
+              >
+                Report
+              </button>
+            ) : (
+              <Link
+                href={signInHref}
+                className="text-[0.75rem] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                aria-label="Sign in to report dua"
+              >
+                Report
+              </Link>
+            ))}
           {canDelete && onDelete && (
             <button
               type="button"

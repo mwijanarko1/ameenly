@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import type { SubmitPublicDuaResult } from "@/app/actions/duas";
+import { sanitizeErrorMessage } from "@/lib/errorMessage";
 
 type SubmitDuaCardClientProps = {
   submitDua: (formData: FormData) => Promise<SubmitPublicDuaResult>;
@@ -47,7 +48,7 @@ export function SubmitDuaCardClient({ submitDua }: SubmitDuaCardClientProps) {
       setSubmissionStatus(result.status);
     } catch (submitError) {
       setError(
-        submitError instanceof Error ? submitError.message : "Something went wrong"
+        sanitizeErrorMessage(submitError, "Something went wrong. Please try again.")
       );
     } finally {
       setIsPending(false);

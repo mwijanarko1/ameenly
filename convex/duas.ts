@@ -29,6 +29,7 @@ const publicDuaValidator = v.object({
   ameen: v.number(),
   authorName: v.optional(v.string()),
   hasCurrentUserSaidAmeen: v.boolean(),
+  hasCurrentUserReported: v.boolean(),
 });
 
 const myDuaValidator = v.object({
@@ -92,14 +93,24 @@ async function enrichPublicDuasWithAuthors(
     duas.map(async (dua) => {
       const author = dua.authorId ? await ctx.db.get(dua.authorId) : null;
       let hasCurrentUserSaidAmeen = false;
+      let hasCurrentUserReported = false;
       if (currentUserId) {
-        const existing = await ctx.db
-          .query("ameens")
-          .withIndex("by_dua_and_user", (q) =>
-            q.eq("duaId", dua._id).eq("userId", currentUserId)
-          )
-          .first();
-        hasCurrentUserSaidAmeen = !!existing;
+        const [ameenExisting, reportExisting] = await Promise.all([
+          ctx.db
+            .query("ameens")
+            .withIndex("by_dua_and_user", (q) =>
+              q.eq("duaId", dua._id).eq("userId", currentUserId)
+            )
+            .first(),
+          ctx.db
+            .query("reports")
+            .withIndex("by_dua_and_user", (q) =>
+              q.eq("duaId", dua._id).eq("userId", currentUserId)
+            )
+            .first(),
+        ]);
+        hasCurrentUserSaidAmeen = !!ameenExisting;
+        hasCurrentUserReported = !!reportExisting;
       }
       return {
         _id: dua._id,
@@ -113,6 +124,7 @@ async function enrichPublicDuasWithAuthors(
         ameen: dua.ameen,
         authorName: dua.isAnonymous ? undefined : author?.name,
         hasCurrentUserSaidAmeen,
+        hasCurrentUserReported,
       };
     })
   );

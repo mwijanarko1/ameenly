@@ -9,6 +9,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { JoinGroupForm } from "@/components/JoinGroupForm";
 import { buildAuthHref } from "@/lib/authRedirect";
+import { sanitizeErrorMessage } from "@/lib/errorMessage";
 
 type Props = {
   params: Promise<{ code: string }>;
@@ -36,7 +37,7 @@ export default function JoinPage({ params, searchParams }: Props) {
       await joinGroup({ inviteCode: code });
       router.push(`/groups/${code}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to join this group.");
+      setError(sanitizeErrorMessage(err, "Failed to join this group."));
     } finally {
       setIsJoining(false);
     }
