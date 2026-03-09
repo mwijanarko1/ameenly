@@ -134,7 +134,7 @@ export const listPublicDuas = query({
       .paginate(args.paginationOpts);
 
     const visibleDuas = result.page.filter((dua) =>
-      isVisibleOnPublicWall(dua.moderationStatus)
+      isVisibleOnPublicWall(dua.moderationStatus) && (dua.reportCount ?? 0) < 2
     );
 
     let page = await enrichPublicDuasWithAuthors(ctx, visibleDuas, user?._id);
@@ -212,7 +212,10 @@ export const submitAuthenticatedPublicDua = mutation({
     text: v.string(),
     isAnonymous: v.boolean(),
   },
-  returns: v.id("duas"),
+  returns: v.object({
+    duaId: v.id("duas"),
+    status: v.union(v.literal("published"), v.literal("queued_for_review")),
+  }),
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
@@ -229,13 +232,33 @@ export const submitAuthenticatedPublicDua = mutation({
 
     await enforceAuthenticatedDuaRateLimit(ctx, user._id);
 
-    return await ctx.db.insert("duas", {
+    const moderation = moderateGuestSubmission({
+      text: trimmedText,
+      name: args.isAnonymous ? undefined : user.name,
+    });
+
+    const moderationStatus =
+      moderation.outcome === "review" ? "pending_review" : "approved";
+    const submissionStatus: "published" | "queued_for_review" =
+      moderationStatus === "pending_review"
+        ? "queued_for_review"
+        : "published";
+
+    const duaId = await ctx.db.insert("duas", {
       text: trimmedText,
       isAnonymous: args.isAnonymous,
       authorId: user._id,
       createdAt: Date.now(),
       ameen: 0,
+      moderationStatus,
+      moderationReasons:
+        moderation.reasons.length > 0 ? moderation.reasons : undefined,
     });
+
+    return {
+      duaId,
+      status: submissionStatus,
+    };
   },
 });
 
@@ -245,6 +268,10 @@ export const submitAuthenticatedPublicDuaFromServer = internalMutation({
     text: v.string(),
     isAnonymous: v.boolean(),
   },
+  returns: v.object({
+    duaId: v.id("duas"),
+    status: v.union(v.literal("published"), v.literal("queued_for_review")),
+  }),
   handler: async (ctx, args) => {
     const user = await getOrCreateConvexUserFromClerkId(ctx, args.clerkId);
 
@@ -252,13 +279,33 @@ export const submitAuthenticatedPublicDuaFromServer = internalMutation({
 
     await enforceAuthenticatedDuaRateLimit(ctx, user._id);
 
-    return await ctx.db.insert("duas", {
+    const moderation = moderateGuestSubmission({
+      text: trimmedText,
+      name: args.isAnonymous ? undefined : user.name,
+    });
+
+    const moderationStatus =
+      moderation.outcome === "review" ? "pending_review" : "approved";
+    const submissionStatus: "published" | "queued_for_review" =
+      moderationStatus === "pending_review"
+        ? "queued_for_review"
+        : "published";
+
+    const duaId = await ctx.db.insert("duas", {
       text: trimmedText,
       isAnonymous: args.isAnonymous,
       authorId: user._id,
       createdAt: Date.now(),
       ameen: 0,
+      moderationStatus,
+      moderationReasons:
+        moderation.reasons.length > 0 ? moderation.reasons : undefined,
     });
+
+    return {
+      duaId,
+      status: submissionStatus,
+    };
   },
 });
 
@@ -407,6 +454,65 @@ export const sayAmeen = mutation({
       userId: user._id,
     });
     await ctx.db.patch(args.duaId, { ameen: dua.ameen + 1 });
+    return null;
+  },
+});
+
+const reportReasonValidator = v.union(
+  v.literal("spam"),
+  v.literal("harassment"),
+  v.literal("hate_speech"),
+  v.literal("inappropriate"),
+  v.literal("other")
+);
+
+export const reportDua = mutation({
+  args: {
+    duaId: v.id("duas"),
+    reason: reportReasonValidator,
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Sign in to report");
+
+    const user = await getOrCreateConvexUser(ctx, {
+      subject: identity.subject,
+      name: identity.name,
+      email: identity.email,
+    });
+
+    const dua = await ctx.db.get("duas", args.duaId);
+    if (!dua) throw new Error("Dua not found");
+    if (dua.groupId !== undefined) {
+      throw new Error("Only public duas can be reported");
+    }
+
+    // Check if user already reported this dua
+    const existingReport = await ctx.db
+      .query("reports")
+      .withIndex("by_dua_and_user", (q) =>
+        q.eq("duaId", args.duaId).eq("userId", user._id)
+      )
+      .first();
+
+    if (existingReport) {
+      throw new Error("You have already reported this dua");
+    }
+
+    // Add report record
+    await ctx.db.insert("reports", {
+      duaId: args.duaId,
+      userId: user._id,
+      createdAt: Date.now(),
+    });
+
+    const currentCount = dua.reportCount ?? 0;
+    const currentReasons = dua.reportReasons ?? [];
+    await ctx.db.patch(args.duaId, {
+      reportCount: currentCount + 1,
+      reportReasons: [...currentReasons, args.reason],
+    });
     return null;
   },
 });

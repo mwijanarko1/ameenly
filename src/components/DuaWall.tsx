@@ -116,6 +116,7 @@ function DuaWallContent({
           dua={dua}
           canDelete={canDelete}
           onDelete={onDeleteDua ? () => onDeleteDua(dua._id) : undefined}
+          canReport={canDelete === undefined}
         />
       ))}
       {status === "CanLoadMore" && (

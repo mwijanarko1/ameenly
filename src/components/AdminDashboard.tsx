@@ -13,17 +13,29 @@ function formatReason(reason: string) {
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
+function formatReportReason(reason: string) {
+  const labels: Record<string, string> = {
+    spam: "Spam",
+    harassment: "Harassment or abuse",
+    hate_speech: "Hate speech or slurs",
+    inappropriate: "Inappropriate content",
+    other: "Other",
+  };
+  return labels[reason] ?? formatReason(reason);
+}
+
 function truncateText(text: string, maxLength: number) {
   if (text.length <= maxLength) return text;
   return text.slice(0, maxLength).trim() + "…";
 }
 
-type TabId = "moderation" | "activity" | "public-duas" | "users";
+type TabId = "moderation" | "activity" | "reports" | "public-duas" | "users";
 
 export function AdminDashboard() {
   const { user } = useUser();
   const stats = useQuery(api.adminModeration.getAdminStats);
   const moderationQueue = useQuery(api.adminModeration.listPendingGuestDuas);
+  const reportedDuas = useQuery(api.adminModeration.listReportedDuas);
   const recentActivity = useQuery(api.adminModeration.listRecentActivity);
   const publicDuasResult = usePaginatedQuery(
     api.adminModeration.listAllPublicDuasForAdmin,
@@ -37,11 +49,13 @@ export function AdminDashboard() {
   );
   const approveGuestDua = useMutation(api.adminModeration.approveGuestDua);
   const rejectGuestDua = useMutation(api.adminModeration.rejectGuestDua);
+  const resolveReportedDua = useMutation(api.adminModeration.resolveReportedDua);
   const updatePublicDua = useMutation(api.adminModeration.updatePublicDua);
   const deleteUserAndData = useAction(api.adminModeration.deleteUserAndData);
 
   const [activeTab, setActiveTab] = useState<TabId>("moderation");
   const [activeDuaId, setActiveDuaId] = useState<Id<"duas"> | null>(null);
+  const [resolvingReportId, setResolvingReportId] = useState<Id<"duas"> | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [editingDuaId, setEditingDuaId] = useState<Id<"duas"> | null>(null);
   const [editingText, setEditingText] = useState("");
@@ -118,6 +132,23 @@ export function AdminDashboard() {
       );
     } finally {
       setActiveDuaId(null);
+    }
+  }
+
+  async function handleResolveReport(
+    duaId: Id<"duas">,
+    action: "dismiss" | "reject"
+  ) {
+    setActionError(null);
+    setResolvingReportId(duaId);
+    try {
+      await resolveReportedDua({ duaId, action });
+    } catch (error) {
+      setActionError(
+        error instanceof Error ? error.message : "Unable to resolve report."
+      );
+    } finally {
+      setResolvingReportId(null);
     }
   }
 
@@ -247,6 +278,23 @@ export function AdminDashboard() {
               {stats?.totalGroups ?? "—"}
             </p>
           </div>
+          <div
+            className="glass-panel"
+            style={{
+              padding: "16px",
+              border:
+                (stats?.reportedDuasCount ?? 0) > 0
+                  ? "2px solid var(--color-accent)"
+                  : undefined,
+            }}
+          >
+            <p style={{ color: "var(--text-secondary)", fontSize: "0.8rem" }}>
+              Reported
+            </p>
+            <p style={{ fontSize: "1.5rem", fontWeight: 700, margin: "4px 0 0" }}>
+              {stats?.reportedDuasCount ?? "—"}
+            </p>
+          </div>
         </div>
 
         {/* Tab navigation */}
@@ -310,6 +358,32 @@ export function AdminDashboard() {
             }}
           >
             Activity
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === "reports"}
+            aria-controls="reports-panel"
+            id="reports-tab"
+            onClick={() => setActiveTab("reports")}
+            style={{
+              padding: "12px 20px",
+              background: "none",
+              border: "none",
+              borderBottom:
+                activeTab === "reports"
+                  ? "2px solid var(--btn-bg)"
+                  : "2px solid transparent",
+              color:
+                activeTab === "reports"
+                  ? "var(--text-primary)"
+                  : "var(--text-secondary)",
+              fontWeight: activeTab === "reports" ? 600 : 400,
+              cursor: "pointer",
+              marginBottom: "-1px",
+            }}
+          >
+            Reports
           </button>
           <button
             type="button"
@@ -576,6 +650,206 @@ export function AdminDashboard() {
                 )}
               </article>
             ))
+          )}
+        </div>
+
+        {/* Reports tab */}
+        <div
+          role="tabpanel"
+          id="reports-panel"
+          aria-labelledby="reports-tab"
+          hidden={activeTab !== "reports"}
+          style={{ display: "grid", gap: "16px" }}
+        >
+          {actionError ? (
+            <p className="text-error" role="alert" aria-live="polite">
+              {actionError}
+            </p>
+          ) : null}
+
+          {reportedDuas?.reportedDuas.length === 0 ? (
+            <div className="glass-panel">
+              <p style={{ color: "var(--text-secondary)" }}>
+                No reported duas.
+              </p>
+            </div>
+          ) : (
+            (reportedDuas?.reportedDuas ?? []).map((dua) => {
+              const isResolving = resolvingReportId === dua._id;
+              return (
+                <article
+                  key={dua._id}
+                  className="glass-panel"
+                  style={{ display: "grid", gap: "16px" }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "flex-start",
+                      gap: "16px",
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <div style={{ display: "grid", gap: "6px" }}>
+                      <h3 style={{ fontSize: "1.05rem", fontWeight: 600 }}>
+                        {dua.isGuest
+                          ? dua.isAnonymous
+                            ? "Anonymous guest"
+                            : dua.name ?? "Unnamed guest"
+                          : dua.isAnonymous
+                            ? "Anonymous"
+                            : dua.authorName ?? "User"}
+                      </h3>
+                      <p
+                        style={{
+                          color: "var(--text-secondary)",
+                          fontSize: "0.85rem",
+                        }}
+                      >
+                        {new Date(dua.createdAt).toLocaleString()}
+                        {dua.isGuest ? " · Guest" : " · Signed in"}
+                      </p>
+                    </div>
+                    <span
+                      style={{
+                        borderRadius: "999px",
+                        padding: "6px 12px",
+                        fontSize: "0.8rem",
+                        fontWeight: 600,
+                        background: "rgba(239, 68, 68, 0.15)",
+                        color: "var(--color-sign-out)",
+                      }}
+                    >
+                      {dua.reportCount} report{dua.reportCount !== 1 ? "s" : ""}
+                    </span>
+                  </div>
+
+                  {dua.reportReasons && dua.reportReasons.length > 0 && (
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: "8px",
+                        flexWrap: "wrap",
+                        marginTop: "-8px",
+                      }}
+                    >
+                      {[...new Set(dua.reportReasons)].map((reason) => (
+                        <span
+                          key={reason}
+                          style={{
+                            borderRadius: "999px",
+                            border: "1px solid var(--border-subtle)",
+                            padding: "4px 10px",
+                            fontSize: "0.75rem",
+                            color: "var(--text-secondary)",
+                          }}
+                        >
+                          {formatReportReason(reason)}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  <div style={{ display: "grid", gap: "16px" }}>
+                    {editingDuaId === dua._id ? (
+                      <div style={{ display: "grid", gap: "12px" }}>
+                        <textarea
+                          value={editingText}
+                          onChange={(e) => setEditingText(e.target.value)}
+                          rows={6}
+                          style={{
+                            width: "100%",
+                            padding: "12px",
+                            borderRadius: "8px",
+                            border: "1px solid var(--border-subtle)",
+                            background: "var(--input-bg)",
+                            color: "var(--text-primary)",
+                            fontSize: "0.95rem",
+                            lineHeight: 1.6,
+                            resize: "vertical",
+                          }}
+                          aria-label="Edit dua text"
+                        />
+                        {actionError && (
+                          <p className="text-error" role="alert">
+                            {actionError}
+                          </p>
+                        )}
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: "12px",
+                            justifyContent: "flex-end",
+                          }}
+                        >
+                          <button
+                            type="button"
+                            className="btn-secondary"
+                            onClick={cancelEditingDua}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            className="btn-primary"
+                            onClick={() => void handleEditSave()}
+                          >
+                            Save
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <p
+                          style={{
+                            whiteSpace: "pre-wrap",
+                            lineHeight: 1.7,
+                            color: "var(--text-primary)",
+                            margin: 0,
+                          }}
+                        >
+                          {dua.text}
+                        </p>
+
+                        <div className="report-actions">
+                          <button
+                            type="button"
+                            className="report-btn-edit"
+                            disabled={isResolving}
+                            onClick={() => {
+                              startEditingDua(dua._id, dua.text);
+                            }}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            className="report-btn-restore"
+                            disabled={isResolving}
+                            onClick={() => {
+                              void handleResolveReport(dua._id, "dismiss");
+                            }}
+                          >
+                            {isResolving && resolvingReportId === dua._id ? "Working…" : "Restore"}
+                          </button>
+                          <button
+                            type="button"
+                            className="report-btn-delete"
+                            disabled={isResolving}
+                            onClick={() => {
+                              void handleResolveReport(dua._id, "reject");
+                            }}
+                          >
+                            {isResolving && resolvingReportId === dua._id ? "Working…" : "Delete"}
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </article>
+              );
+            })
           )}
         </div>
 

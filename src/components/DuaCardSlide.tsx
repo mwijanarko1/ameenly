@@ -9,6 +9,8 @@ import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
 import { buildAuthHref, buildReturnPath } from "@/lib/authRedirect";
 import { getDuaDisplayName } from "@/lib/duaDisplay";
+import { ReportModal } from "@/components/ReportModal";
+import type { ReportReason } from "@/lib/reportReasons";
 
 function formatTimeAgo(ts: number): string {
     const diff = Date.now() - ts;
@@ -36,15 +38,20 @@ type DuaCardSlideProps = {
         ameen: number;
         hasCurrentUserSaidAmeen?: boolean;
     };
+    canReport?: boolean;
 };
 
-export function DuaCardSlide({ dua }: DuaCardSlideProps) {
+export function DuaCardSlide({ dua, canReport }: DuaCardSlideProps) {
     const { isSignedIn } = useAuth();
     const pathname = usePathname();
     const searchParams = useSearchParams();
     const sayAmeen = useMutation(api.duas.sayAmeen);
+    const reportDua = useMutation(api.duas.reportDua);
     const [isSubmittingAmeen, setIsSubmittingAmeen] = useState(false);
     const [ameenError, setAmeenError] = useState<string | null>(null);
+    const [isReporting, setIsReporting] = useState(false);
+    const [reportError, setReportError] = useState<string | null>(null);
+    const [showReportModal, setShowReportModal] = useState(false);
 
     const displayName = getDuaDisplayName(dua);
     const signInHref = buildAuthHref(
@@ -66,6 +73,21 @@ export function DuaCardSlide({ dua }: DuaCardSlideProps) {
         }
     }
 
+    async function handleReportSubmit(reason: ReportReason) {
+        try {
+            setReportError(null);
+            setIsReporting(true);
+            await reportDua({ duaId: dua._id, reason });
+            setShowReportModal(false);
+        } catch (error) {
+            setReportError(
+                error instanceof Error ? error.message : "Could not report dua."
+            );
+        } finally {
+            setIsReporting(false);
+        }
+    }
+
     const hasSaidAmeen = dua.hasCurrentUserSaidAmeen;
 
     return (
@@ -78,8 +100,24 @@ export function DuaCardSlide({ dua }: DuaCardSlideProps) {
                     {displayName ? (
                         <p className="dua-name">{displayName}</p>
                     ) : null}
-                    <p className="dua-time">{formatTimeAgo(dua.createdAt)}</p>
+                    {displayName ? (
+                        <p className="dua-time">{formatTimeAgo(dua.createdAt)}</p>
+                    ) : null}
                 </div>
+                {canReport && isSignedIn && (
+                    <button
+                        type="button"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setShowReportModal(true);
+                        }}
+                        disabled={isReporting}
+                        className="dua-report-btn"
+                        aria-label="Report dua"
+                    >
+                        Report
+                    </button>
+                )}
             </div>
 
             <div className="dua-body">
@@ -113,16 +151,26 @@ export function DuaCardSlide({ dua }: DuaCardSlideProps) {
                     {dua.ameen} {dua.ameen === 1 ? "Ameen" : "Ameens"}
                 </p>
 
-                {ameenError ? (
+                {(ameenError || reportError) ? (
                     <p
                         className="text-error ameen-error"
                         role="alert"
                         aria-live="polite"
                     >
-                        {ameenError}
+                        {ameenError ?? reportError}
                     </p>
                 ) : null}
             </div>
+            <ReportModal
+                isOpen={showReportModal}
+                onClose={() => {
+                    setShowReportModal(false);
+                    setReportError(null);
+                }}
+                onSubmit={handleReportSubmit}
+                isSubmitting={isReporting}
+                error={reportError}
+            />
         </article>
     );
 }

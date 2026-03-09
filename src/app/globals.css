@@ -690,7 +690,27 @@ body {
 .card-dua .dua-author {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 10px;
+}
+
+.card-dua .dua-report-btn {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.card-dua .dua-report-btn:hover:not(:disabled) {
+  color: var(--text-primary);
+}
+
+.card-dua .dua-report-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .card-dua .dua-avatar {
@@ -961,6 +981,74 @@ body {
   color: var(--color-sign-out);
   border-color: color-mix(in srgb, var(--color-sign-out) 50%, var(--border-subtle));
   background: color-mix(in srgb, var(--color-sign-out) 8%, transparent);
+}
+
+/* Report action buttons — same size, distinct colors */
+.report-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.report-actions button {
+  min-width: 100px;
+  padding: 10px 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.15s, background 0.2s;
+}
+
+.report-actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.report-btn-edit {
+  background: var(--color-soft);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+}
+
+.report-btn-edit:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-accent) 20%, var(--color-soft));
+  border-color: var(--color-accent);
+}
+
+.report-btn-restore {
+  background: rgba(34, 197, 94, 0.2);
+  color: #16a34a;
+  border: 1px solid rgba(34, 197, 94, 0.4);
+}
+
+.report-btn-restore:hover:not(:disabled) {
+  background: rgba(34, 197, 94, 0.3);
+  border-color: rgba(34, 197, 94, 0.6);
+}
+
+.report-btn-delete {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--color-sign-out);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.report-btn-delete:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: var(--color-sign-out);
+}
+
+@media (prefers-color-scheme: dark) {
+  .report-btn-restore {
+    color: #4ade80;
+    background: rgba(34, 197, 94, 0.15);
+    border-color: rgba(34, 197, 94, 0.35);
+  }
+  .report-btn-restore:hover:not(:disabled) {
+    background: rgba(34, 197, 94, 0.25);
+    border-color: rgba(34, 197, 94, 0.5);
+  }
 }
 
 .btn-delete-account {
@@ -2018,4 +2106,96 @@ code {
   line-height: 1.5;
   max-width: 340px;
   margin: 0 auto;
+}
+
+/* ──────── Report Modal ──────── */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.report-modal {
+  max-width: min(420px, 92vw);
+  padding: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  background: var(--bg-card);
+  box-shadow: var(--card-shadow);
+}
+
+.report-modal::backdrop {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.report-modal-content {
+  padding: 24px;
+}
+
+.report-modal-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 8px;
+}
+
+.report-modal-desc {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin: 0 0 20px;
+}
+
+.report-modal-fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border: none;
+  padding: 0;
+  margin: 0 0 20px;
+}
+
+.report-modal-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border-subtle);
+  background: var(--input-bg);
+  cursor: pointer;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.report-modal-option:hover {
+  border-color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 8%, var(--input-bg));
+}
+
+.report-modal-radio {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--btn-bg);
+}
+
+.report-modal-error {
+  font-size: 0.85rem;
+  color: var(--color-sign-out);
+  margin: 0 0 16px;
+}
+
+.report-modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
 }

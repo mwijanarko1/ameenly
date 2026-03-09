@@ -64,6 +64,27 @@ const adminPublicDuaValidator = v.object({
   isGuest: v.boolean(),
 });
 
+const reportedDuaValidator = v.object({
+  _id: v.id("duas"),
+  _creationTime: v.number(),
+  text: v.string(),
+  name: v.optional(v.string()),
+  isAnonymous: v.boolean(),
+  createdAt: v.number(),
+  ameen: v.number(),
+  reportCount: v.number(),
+  reportReasons: v.array(v.string()),
+  moderationStatus: v.optional(
+    v.union(
+      v.literal("approved"),
+      v.literal("pending_review"),
+      v.literal("rejected")
+    )
+  ),
+  authorName: v.optional(v.string()),
+  isGuest: v.boolean(),
+});
+
 export const listPendingGuestDuas = query({
   args: {},
   returns: v.object({
@@ -123,6 +144,7 @@ export const getAdminStats = query({
     pendingModerationCount: v.optional(v.number()),
     totalGroups: v.optional(v.number()),
     totalAmeens: v.optional(v.number()),
+    reportedDuasCount: v.optional(v.number()),
   }),
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -148,6 +170,12 @@ export const getAdminStats = query({
         d.moderationStatus === "pending_review"
     );
 
+    const reportedDuas = duas.filter(
+      (d) =>
+        d.groupId === undefined &&
+        (d.reportCount ?? 0) >= 1
+    );
+
     return {
       isAuthorized: true,
       totalUsers: users.length,
@@ -155,6 +183,7 @@ export const getAdminStats = query({
       pendingModerationCount: pendingDuas.length,
       totalGroups: groups.length,
       totalAmeens: ameens.length,
+      reportedDuasCount: reportedDuas.length,
     };
   },
 });
@@ -234,6 +263,60 @@ export const listAllPublicDuasForAdmin = query({
     return {
       ...result,
       page,
+    };
+  },
+});
+
+export const listReportedDuas = query({
+  args: {},
+  returns: v.object({
+    isAuthorized: v.boolean(),
+    reportedDuas: v.array(reportedDuaValidator),
+  }),
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return { isAuthorized: false, reportedDuas: [] };
+    }
+    const siteAdmin = await getSiteAdminByClerkId(ctx, identity.subject);
+    if (!siteAdmin) {
+      return { isAuthorized: false, reportedDuas: [] };
+    }
+
+    const allPublicDuas = await ctx.db
+      .query("duas")
+      .withIndex("by_group_wall", (q) => q.eq("groupId", undefined))
+      .order("desc")
+      .collect();
+
+    const reportedDuas = allPublicDuas
+      .filter((d) => (d.reportCount ?? 0) >= 1)
+      .sort((a, b) => (b.reportCount ?? 0) - (a.reportCount ?? 0))
+      .slice(0, 100);
+
+    const page = await Promise.all(
+      reportedDuas.map(async (dua) => {
+        const author = dua.authorId ? await ctx.db.get(dua.authorId) : null;
+        return {
+          _id: dua._id,
+          _creationTime: dua._creationTime,
+          text: dua.text,
+          name: dua.name,
+          isAnonymous: dua.isAnonymous ?? false,
+          createdAt: dua.createdAt,
+          ameen: dua.ameen,
+          reportCount: dua.reportCount ?? 0,
+          reportReasons: dua.reportReasons ?? [],
+          moderationStatus: dua.moderationStatus,
+          authorName: dua.isAnonymous ? undefined : author?.name,
+          isGuest: dua.authorId === undefined,
+        };
+      })
+    );
+
+    return {
+      isAuthorized: true,
+      reportedDuas: page,
     };
   },
 });
@@ -372,6 +455,55 @@ export const rejectGuestDua = mutation({
   },
 });
 
+async function getReportedPublicDuaOrThrow(
+  ctx: MutationCtx,
+  duaId: Id<"duas">
+) {
+  const dua = await ctx.db.get(duaId);
+  if (!dua) throw new Error("Dua not found");
+  if (dua.groupId !== undefined) throw new Error("Only public duas can be resolved here");
+  if ((dua.reportCount ?? 0) < 1) throw new Error("Dua has no reports");
+  return dua;
+}
+
+export const resolveReportedDua = mutation({
+  args: {
+    duaId: v.id("duas"),
+    action: v.union(v.literal("dismiss"), v.literal("reject")),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const siteAdmin = await requireSiteAdmin(ctx);
+    await getReportedPublicDuaOrThrow(ctx, args.duaId);
+
+    if (args.action === "dismiss") {
+      await ctx.db.patch(args.duaId, {
+        reportCount: 0,
+        reportReasons: [],
+      });
+    } else {
+      await ctx.db.patch(args.duaId, {
+        reportCount: 0,
+        reportReasons: [],
+        moderationStatus: "rejected",
+        moderatedAt: Date.now(),
+        moderatedByAdminId: siteAdmin._id,
+      });
+    }
+
+    // Clear report records
+    const reports = await ctx.db
+      .query("reports")
+      .withIndex("by_dua", (q) => q.eq("duaId", args.duaId))
+      .collect();
+    for (const report of reports) {
+      await ctx.db.delete(report._id);
+    }
+
+    return null;
+  },
+});
+
 export const _getUserForAdmin = internalQuery({
   args: { userId: v.id("users") },
   returns: v.union(v.object({ clerkId: v.string() }), v.null()),
@@ -502,7 +634,16 @@ export const _deleteUserConvexData = internalMutation({
       await ctx.db.delete(m._id);
     }
 
-    // 5. Delete the user record
+    // 5. Delete reports made by this user
+    const userReports = await ctx.db
+      .query("reports")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .collect();
+    for (const r of userReports) {
+      await ctx.db.delete(r._id);
+    }
+
+    // 6. Delete the user record
     await ctx.db.delete(userId);
     return null;
   },

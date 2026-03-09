@@ -55,8 +55,11 @@ export default defineSchema({
     moderationReasons: v.optional(v.array(v.string())),
     moderatedAt: v.optional(v.number()),
     moderatedByAdminId: v.optional(v.id("siteAdmins")),
+    reportCount: v.optional(v.number()),
+    reportReasons: v.optional(v.array(v.string())),
   })
     .index("by_group_wall", ["groupId", "createdAt"])
+    .index("by_report_count", ["reportCount"])
     .index("by_ip_and_time", ["ipHash", "createdAt"])
     .index("by_author_and_time", ["authorId", "createdAt"])
     .index("by_moderation_status_and_time", ["moderationStatus", "createdAt"]),
@@ -64,6 +67,15 @@ export default defineSchema({
   ameens: defineTable({
     duaId: v.id("duas"),
     userId: v.id("users"),
+  })
+    .index("by_dua_and_user", ["duaId", "userId"])
+    .index("by_dua", ["duaId"])
+    .index("by_user", ["userId"]),
+
+  reports: defineTable({
+    duaId: v.id("duas"),
+    userId: v.id("users"),
+    createdAt: v.number(),
   })
     .index("by_dua_and_user", ["duaId", "userId"])
     .index("by_dua", ["duaId"])

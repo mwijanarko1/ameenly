@@ -9,6 +9,8 @@ import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
 import { buildAuthHref, buildReturnPath } from "@/lib/authRedirect";
 import { getDuaDisplayName } from "@/lib/duaDisplay";
+import { ReportModal } from "@/components/ReportModal";
+import type { ReportReason } from "@/lib/reportReasons";
 
 function formatTimeAgo(ts: number): string {
   const diff = Date.now() - ts;
@@ -40,15 +42,20 @@ type DuaCardProps = {
   dua: PublicDua;
   onDelete?: () => void;
   canDelete?: boolean;
+  canReport?: boolean;
 };
 
-export function DuaCard({ dua, onDelete, canDelete }: DuaCardProps) {
+export function DuaCard({ dua, onDelete, canDelete, canReport }: DuaCardProps) {
   const { isSignedIn } = useAuth();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const sayAmeen = useMutation(api.duas.sayAmeen);
+  const reportDua = useMutation(api.duas.reportDua);
   const [isSubmittingAmeen, setIsSubmittingAmeen] = useState(false);
   const [ameenError, setAmeenError] = useState<string | null>(null);
+  const [isReporting, setIsReporting] = useState(false);
+  const [reportError, setReportError] = useState<string | null>(null);
+  const [showReportModal, setShowReportModal] = useState(false);
   const displayName = getDuaDisplayName(dua);
   const signInHref = buildAuthHref(
     "/sign-in",
@@ -66,6 +73,21 @@ export function DuaCard({ dua, onDelete, canDelete }: DuaCardProps) {
       );
     } finally {
       setIsSubmittingAmeen(false);
+    }
+  }
+
+  async function handleReportSubmit(reason: ReportReason) {
+    try {
+      setReportError(null);
+      setIsReporting(true);
+      await reportDua({ duaId: dua._id, reason });
+      setShowReportModal(false);
+    } catch (error) {
+      setReportError(
+        error instanceof Error ? error.message : "Could not report dua."
+      );
+    } finally {
+      setIsReporting(false);
     }
   }
 
@@ -88,16 +110,29 @@ export function DuaCard({ dua, onDelete, canDelete }: DuaCardProps) {
             {formatTimeAgo(dua.createdAt)}
           </p>
         </div>
-        {canDelete && onDelete && (
-          <button
-            type="button"
-            onClick={onDelete}
-            className="dua-card-delete text-error"
-            aria-label="Delete dua"
-          >
-            Delete
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {canReport && isSignedIn && (
+            <button
+              type="button"
+              onClick={() => setShowReportModal(true)}
+              disabled={isReporting}
+              className="text-[0.75rem] text-[var(--text-secondary)] hover:text-[var(--text-primary)] disabled:opacity-50"
+              aria-label="Report dua"
+            >
+              Report
+            </button>
+          )}
+          {canDelete && onDelete && (
+            <button
+              type="button"
+              onClick={onDelete}
+              className="dua-card-delete text-error"
+              aria-label="Delete dua"
+            >
+              Delete
+            </button>
+          )}
+        </div>
       </div>
       <div className="mt-3 flex items-center gap-2.5 border-t border-[var(--border-subtle)] pt-3">
         {isSignedIn ? (
@@ -124,15 +159,25 @@ export function DuaCard({ dua, onDelete, canDelete }: DuaCardProps) {
           {dua.ameen} {dua.ameen === 1 ? "Ameen" : "Ameens"}
         </span>
       </div>
-      {ameenError ? (
+      {(ameenError || reportError) ? (
         <p
           className="mt-2 text-[0.8rem] text-error"
           role="alert"
           aria-live="polite"
         >
-          {ameenError}
+          {ameenError ?? reportError}
         </p>
       ) : null}
+      <ReportModal
+        isOpen={showReportModal}
+        onClose={() => {
+          setShowReportModal(false);
+          setReportError(null);
+        }}
+        onSubmit={handleReportSubmit}
+        isSubmitting={isReporting}
+        error={reportError}
+      />
     </article>
   );
 }

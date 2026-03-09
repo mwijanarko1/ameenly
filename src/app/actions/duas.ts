@@ -81,7 +81,7 @@ export async function submitPublicDua(
       };
       adminClient.setAdminAuth(convexDeployKey);
 
-      await adminClient.mutation(
+      const result = await adminClient.mutation(
         internal.duas.submitAuthenticatedPublicDuaFromServer as unknown as Parameters<
           ConvexHttpClient["mutation"]
         >[0],
@@ -92,7 +92,7 @@ export async function submitPublicDua(
         }
       );
 
-      return { status: "published" };
+      return { status: result.status };
     } else {
       const ip = await getClientIp();
       const ipHash = hashIp(ip);

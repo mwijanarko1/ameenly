@@ -108,7 +108,12 @@ export function DuaDeck(props: DuaDeckProps) {
 
   const cards =
     props.mode === "public"
-      ? [<HeroCard key="hero" />, ...duas.map((dua) => <DuaCardSlide key={dua._id} dua={dua} />)]
+      ? [
+          <HeroCard key="hero" />,
+          ...duas.map((dua) => (
+            <DuaCardSlide key={dua._id} dua={dua} canReport />
+          )),
+        ]
       : duas.map((dua) => <DuaCardSlide key={dua._id} dua={dua} />);
 
   function handleCardChange(index: number) {
