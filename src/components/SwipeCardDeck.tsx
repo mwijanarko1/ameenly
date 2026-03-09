@@ -341,17 +341,20 @@ export function SwipeCardDeck({
           const dotIndex =
             totalCards <= 12
               ? i
-              : Math.round(
-                  (i / 11) * (totalCards - 1)
-                );
+              : Math.round((i / 11) * (totalCards - 1));
+          const activeDotIndex =
+            totalCards <= 12
+              ? currentIndex
+              : Math.round((currentIndex * 11) / Math.max(totalCards - 1, 1));
+          const isActive = i === activeDotIndex;
           return (
             <button
               key={dotIndex}
               type="button"
               role="tab"
-              aria-selected={dotIndex === currentIndex}
+              aria-selected={isActive}
               aria-label={`Go to card ${dotIndex + 1}`}
-              className={`swipe-dot ${dotIndex === currentIndex ? "active" : ""}`}
+              className={`swipe-dot ${isActive ? "active" : ""}`}
               onClick={() => goToCard(dotIndex)}
             />
           );

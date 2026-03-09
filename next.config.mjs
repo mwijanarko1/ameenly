@@ -51,9 +51,9 @@ function buildCsp() {
   const parts = [
     "default-src 'self'",
     `script-src ${scriptSources.join(" ")}`,
-    "style-src 'self' 'unsafe-inline'",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "img-src 'self' data: blob: https: https://img.clerk.com",
-    "font-src 'self' data:",
+    "font-src 'self' data: https://fonts.gstatic.com",
     `connect-src ${connectSources.join(" ")}`,
     `frame-src ${frameSources.join(" ")}`,
     "frame-ancestors 'none'",

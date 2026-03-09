@@ -235,9 +235,11 @@ export const listAllPublicDuasForAdmin = query({
       return { page: [], isDone: true, continueCursor: "" };
     }
 
+    // Use filter for groupId undefined (undefined is not valid in Convex index eq())
     const result = await ctx.db
       .query("duas")
-      .withIndex("by_group_wall", (q) => q.eq("groupId", undefined))
+      .withIndex("by_creation_time")
+      .filter((q) => q.eq(q.field("groupId"), undefined))
       .order("desc")
       .paginate(args.paginationOpts);
 
@@ -283,16 +285,18 @@ export const listReportedDuas = query({
       return { isAuthorized: false, reportedDuas: [] };
     }
 
-    const allPublicDuas = await ctx.db
+    // Use by_report_count index (undefined is not valid in Convex index eq())
+    const reportedDuas = await ctx.db
       .query("duas")
-      .withIndex("by_group_wall", (q) => q.eq("groupId", undefined))
+      .withIndex("by_report_count", (q) => q.gte("reportCount", 1))
       .order("desc")
-      .collect();
-
-    const reportedDuas = allPublicDuas
-      .filter((d) => (d.reportCount ?? 0) >= 1)
-      .sort((a, b) => (b.reportCount ?? 0) - (a.reportCount ?? 0))
-      .slice(0, 100);
+      .collect()
+      .then((duas) =>
+        duas
+          .filter((d) => d.groupId === undefined)
+          .sort((a, b) => (b.reportCount ?? 0) - (a.reportCount ?? 0))
+          .slice(0, 100)
+      );
 
     const page = await Promise.all(
       reportedDuas.map(async (dua) => {

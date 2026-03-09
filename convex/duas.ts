@@ -139,9 +139,11 @@ export const listPublicDuas = query({
       ? await getConvexUserFromIdentity(ctx, identity.subject)
       : null;
 
+    // Use filter for groupId undefined (undefined is not valid in Convex index eq())
     const result = await ctx.db
       .query("duas")
-      .withIndex("by_group_wall", (q) => q.eq("groupId", undefined))
+      .withIndex("by_creation_time")
+      .filter((q) => q.eq(q.field("groupId"), undefined))
       .order("desc")
       .paginate(args.paginationOpts);
 

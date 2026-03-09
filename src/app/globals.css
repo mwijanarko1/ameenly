@@ -1450,9 +1450,11 @@ body {
 .nav-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   padding: 8px 14px;
-  font-size: 0.875rem;
+  font-size: clamp(0.7rem, 2vw + 0.5rem, 0.875rem);
+  white-space: nowrap;
   font-weight: 500;
   color: var(--text-primary);
   background: var(--bg-card);
