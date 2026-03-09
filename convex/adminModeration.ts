@@ -1,9 +1,21 @@
 import { v } from "convex/values";
 import type { MutationCtx } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
-import { mutation, query } from "./_generated/server";
+import { action, internalMutation, internalQuery, mutation, query } from "./_generated/server";
 import { paginationOptsValidator, paginationResultValidator } from "convex/server";
+import { api, internal } from "./_generated/api";
 import { getSiteAdminByClerkId, requireSiteAdmin } from "./lib/siteAdminAuth";
+
+export const isSiteAdmin = query({
+  args: {},
+  returns: v.object({ isAdmin: v.boolean() }),
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return { isAdmin: false };
+    const siteAdmin = await getSiteAdminByClerkId(ctx, identity.subject);
+    return { isAdmin: siteAdmin !== null };
+  },
+});
 
 const recentActivityItemValidator = v.object({
   _id: v.id("duas"),
@@ -22,6 +34,14 @@ const pendingGuestDuaValidator = v.object({
   isAnonymous: v.boolean(),
   createdAt: v.number(),
   moderationReasons: v.array(v.string()),
+});
+
+const adminUserValidator = v.object({
+  _id: v.id("users"),
+  clerkId: v.string(),
+  name: v.string(),
+  email: v.optional(v.string()),
+  _creationTime: v.number(),
 });
 
 const adminPublicDuaValidator = v.object({
@@ -135,6 +155,40 @@ export const getAdminStats = query({
       pendingModerationCount: pendingDuas.length,
       totalGroups: groups.length,
       totalAmeens: ameens.length,
+    };
+  },
+});
+
+export const listAllUsers = query({
+  args: { paginationOpts: paginationOptsValidator },
+  returns: paginationResultValidator(adminUserValidator),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return { page: [], isDone: true, continueCursor: "" };
+    }
+    const siteAdmin = await getSiteAdminByClerkId(ctx, identity.subject);
+    if (!siteAdmin) {
+      return { page: [], isDone: true, continueCursor: "" };
+    }
+
+    const result = await ctx.db
+      .query("users")
+      .withIndex("by_creation_time")
+      .order("desc")
+      .paginate(args.paginationOpts);
+
+    const page = result.page.map((user) => ({
+      _id: user._id,
+      clerkId: user.clerkId,
+      name: user.name,
+      email: user.email,
+      _creationTime: user._creationTime,
+    }));
+
+    return {
+      ...result,
+      page,
     };
   },
 });
@@ -314,6 +368,142 @@ export const rejectGuestDua = mutation({
       moderatedByAdminId: siteAdmin._id,
     });
 
+    return null;
+  },
+});
+
+export const _getUserForAdmin = internalQuery({
+  args: { userId: v.id("users") },
+  returns: v.union(v.object({ clerkId: v.string() }), v.null()),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return null;
+    const siteAdmin = await getSiteAdminByClerkId(ctx, identity.subject);
+    if (!siteAdmin) return null;
+    const user = await ctx.db.get(args.userId);
+    if (!user) return null;
+    return { clerkId: user.clerkId };
+  },
+});
+
+export const deleteUserAndData = action({
+  args: {
+    userId: v.id("users"),
+    clerkId: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const isAdminResult = await ctx.runQuery(api.adminModeration.isSiteAdmin, {});
+    if (!isAdminResult?.isAdmin) {
+      throw new Error("Not authorized");
+    }
+
+    const user = await ctx.runQuery(internal.adminModeration._getUserForAdmin, {
+      userId: args.userId,
+    });
+    if (!user || user.clerkId !== args.clerkId) {
+      throw new Error("User not found or clerkId mismatch");
+    }
+
+    const clerkSecret = process.env.CLERK_SECRET_KEY;
+    if (!clerkSecret) {
+      throw new Error("CLERK_SECRET_KEY is not configured");
+    }
+
+    const clerkRes = await fetch(
+      `https://api.clerk.com/v1/users/${encodeURIComponent(args.clerkId)}`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${clerkSecret}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    if (!clerkRes.ok) {
+      const body = await clerkRes.text();
+      throw new Error(`Clerk API error: ${clerkRes.status} ${body}`);
+    }
+
+    await ctx.runMutation(internal.adminModeration._deleteUserConvexData, {
+      userId: args.userId,
+    });
+    return null;
+  },
+});
+
+export const _deleteUserConvexData = internalMutation({
+  args: { userId: v.id("users") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const userId = args.userId;
+
+    // 1. Delete ameens by this user
+    const userAmeens = await ctx.db
+      .query("ameens")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .collect();
+    for (const a of userAmeens) {
+      await ctx.db.delete(a._id);
+    }
+
+    // 2. Delete duas authored by this user (and their ameens)
+    const authoredDuas = await ctx.db
+      .query("duas")
+      .withIndex("by_author_and_time", (q) => q.eq("authorId", userId))
+      .collect();
+    for (const dua of authoredDuas) {
+      const duaAmeens = await ctx.db
+        .query("ameens")
+        .withIndex("by_dua", (q) => q.eq("duaId", dua._id))
+        .collect();
+      for (const a of duaAmeens) {
+        await ctx.db.delete(a._id);
+      }
+      await ctx.db.delete(dua._id);
+    }
+
+    // 3. Delete groups created by this user (and their contents)
+    const ownedGroups = await ctx.db
+      .query("groups")
+      .withIndex("by_creator", (q) => q.eq("creatorId", userId))
+      .collect();
+    for (const group of ownedGroups) {
+      const groupDuas = await ctx.db
+        .query("duas")
+        .withIndex("by_group_wall", (q) => q.eq("groupId", group._id))
+        .collect();
+      for (const dua of groupDuas) {
+        const duaAmeens = await ctx.db
+          .query("ameens")
+          .withIndex("by_dua", (q) => q.eq("duaId", dua._id))
+          .collect();
+        for (const a of duaAmeens) {
+          await ctx.db.delete(a._id);
+        }
+        await ctx.db.delete(dua._id);
+      }
+      const members = await ctx.db
+        .query("groupMembers")
+        .withIndex("by_group", (q) => q.eq("groupId", group._id))
+        .collect();
+      for (const m of members) {
+        await ctx.db.delete(m._id);
+      }
+      await ctx.db.delete(group._id);
+    }
+
+    // 4. Delete remaining group memberships for this user
+    const memberships = await ctx.db
+      .query("groupMembers")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .collect();
+    for (const m of memberships) {
+      await ctx.db.delete(m._id);
+    }
+
+    // 5. Delete the user record
+    await ctx.db.delete(userId);
     return null;
   },
 });

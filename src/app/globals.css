@@ -963,6 +963,24 @@ body {
   background: color-mix(in srgb, var(--color-sign-out) 8%, transparent);
 }
 
+.btn-delete-account {
+  margin-top: 16px;
+  padding: 12px 20px;
+  font-size: 0.85rem;
+  color: var(--color-sign-out);
+  background: none;
+  border: 1px solid color-mix(in srgb, var(--color-sign-out) 50%, var(--border-subtle));
+  border-radius: 14px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.btn-delete-account:hover {
+  background: color-mix(in srgb, var(--color-sign-out) 8%, transparent);
+  border-color: var(--color-sign-out);
+}
+
 .btn-ameen {
   width: 100%;
   display: flex;
@@ -1927,6 +1945,56 @@ code {
 .profile-edit-name-btn:hover {
   color: var(--text-primary);
   background: color-mix(in srgb, var(--color-soft) 60%, transparent);
+}
+
+.admin-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--color-accent) 85%, white),
+    color-mix(in srgb, var(--color-accent) 60%, white)
+  );
+  border: 1px solid color-mix(in srgb, var(--color-accent) 70%, transparent);
+  border-radius: 999px;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.admin-badge:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+@media (prefers-color-scheme: dark) {
+  .admin-badge {
+    color: var(--color-primary);
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--color-accent) 50%, var(--color-bg)),
+      color-mix(in srgb, var(--color-accent) 35%, var(--color-bg))
+    );
+    border-color: color-mix(in srgb, var(--color-accent) 50%, transparent);
+    box-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  .admin-badge:hover {
+    box-shadow:
+      0 2px 8px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
 }
 
 .profile-edit-name-btn:focus-visible {

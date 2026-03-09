@@ -2,7 +2,8 @@
 
 import { use, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { usePaginatedQuery } from "convex/react";
+import { useRouter } from "next/navigation";
+import { usePaginatedQuery, useMutation } from "convex/react";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
 import {
@@ -11,6 +12,7 @@ import {
   useClerk,
   useUser,
 } from "@clerk/nextjs";
+import { useQuery } from "convex/react";
 import { buildAuthHref } from "@/lib/authRedirect";
 import { getDuaDisplayName } from "@/lib/duaDisplay";
 import { LegalLinks } from "@/components/LegalLinks";
@@ -161,11 +163,16 @@ function SignedOutProfile() {
 function SignedInProfile() {
   const { user } = useUser();
   const { signOut } = useClerk();
+  const router = useRouter();
+  const deleteAccountMutation = useMutation(api.users.deleteAccount);
   const [activeTab, setActiveTab] = useState<"mine" | "ameen">("mine");
   const [isEditingName, setIsEditingName] = useState(false);
   const [draftName, setDraftName] = useState("");
   const [nameError, setNameError] = useState<string | null>(null);
   const [isSavingName, setIsSavingName] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const displayNameInputRef = useRef<HTMLInputElement>(null);
   const result = usePaginatedQuery(
     api.duas.listMyDuas,
@@ -180,6 +187,7 @@ function SignedInProfile() {
 
   const duas = result.results as ProfileDua[];
   const ameenDuas = ameenResult.results as AmeenDua[];
+  const { isAdmin } = useQuery(api.adminModeration.isSiteAdmin) ?? { isAdmin: false };
 
   const displayName =
     [user?.firstName, user?.lastName].filter(Boolean).join(" ").trim() ||
@@ -226,6 +234,26 @@ function SignedInProfile() {
       setNameError(err instanceof Error ? err.message : "Failed to update name");
     } finally {
       setIsSavingName(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!user) return;
+    setIsDeleting(true);
+    setDeleteError(null);
+    try {
+      await deleteAccountMutation();
+      const res = await fetch("/api/delete-account", { method: "POST" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error ?? "Failed to delete account");
+      }
+      await signOut();
+      router.push("/");
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : "Failed to delete account");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -314,6 +342,17 @@ function SignedInProfile() {
                 <h1 className="page-title" style={{ margin: 0 }}>
                   {displayName}
                 </h1>
+                {isAdmin && (
+                  <Link
+                    href="/admin"
+                    className="admin-badge"
+                    title="Site admin"
+                    aria-label="Go to admin dashboard"
+                    style={{ textDecoration: "none" }}
+                  >
+                    Admin
+                  </Link>
+                )}
                 <button
                   type="button"
                   onClick={startEditingName}
@@ -609,6 +648,73 @@ function SignedInProfile() {
         >
           Sign Out
         </button>
+        {showDeleteConfirm ? (
+          <div
+            style={{
+              marginTop: "24px",
+              padding: "16px",
+              borderRadius: "12px",
+              border: "1px solid var(--border-subtle)",
+              background: "color-mix(in srgb, var(--color-sign-out) 8%, var(--bg-deep))",
+            }}
+          >
+            <p
+              style={{
+                fontSize: "0.85rem",
+                color: "var(--text-primary)",
+                marginBottom: "12px",
+                lineHeight: 1.5,
+              }}
+            >
+              This will permanently delete your account, profile, groups you created, and anonymize your duas. This cannot be undone.
+            </p>
+            {deleteError && (
+              <p style={{ fontSize: "0.8rem", color: "var(--color-sign-out)", marginBottom: "12px" }}>
+                {deleteError}
+              </p>
+            )}
+            <div style={{ display: "flex", gap: "12px" }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowDeleteConfirm(false);
+                  setDeleteError(null);
+                }}
+                disabled={isDeleting}
+                className="btn-secondary"
+                style={{ padding: "10px 16px", fontSize: "0.85rem" }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteAccount}
+                disabled={isDeleting}
+                style={{
+                  padding: "10px 16px",
+                  fontSize: "0.85rem",
+                  borderRadius: "14px",
+                  fontWeight: 600,
+                  border: "none",
+                  cursor: isDeleting ? "not-allowed" : "pointer",
+                  background: "var(--color-sign-out)",
+                  color: "white",
+                  opacity: isDeleting ? 0.7 : 1,
+                }}
+              >
+                {isDeleting ? "Deleting…" : "Yes, delete my account"}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setShowDeleteConfirm(true)}
+            className="btn-delete-account"
+          >
+            Delete Account
+          </button>
+        )}
       </div>
     </main>
   );

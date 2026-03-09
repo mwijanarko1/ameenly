@@ -23,7 +23,7 @@ export async function enforceGuestPublicDuaRateLimit(
 
   if (recentDuas.length >= GUEST_PUBLIC_DUA_LIMIT) {
     throw new Error(
-      "Rate limit reached. Guests can submit 1 dua every 24 hours."
+      "You've already submitted a dua today. Guests can submit one dua every 24 hours. Sign in to submit more."
     );
   }
 }
@@ -42,7 +42,7 @@ export async function enforceAuthenticatedDuaRateLimit(
 
   if (recentDuas.length >= AUTHENTICATED_DUA_LIMIT) {
     throw new Error(
-      "Rate limit reached. Signed-in users can submit up to 50 duas per hour."
+      "You've reached your hourly limit. Please try again in a little while."
     );
   }
 }

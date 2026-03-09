@@ -51,14 +51,15 @@ export async function POST(req: Request) {
     return new Response("Invalid signature", { status: 400 });
   }
 
+  const convex = new ConvexHttpClient(convexUrl) as ConvexHttpClient & {
+    setAdminAuth: (token: string) => void;
+  };
+  convex.setAdminAuth(convexDeployKey);
+
   if (event.type === "user.created" || event.type === "user.updated") {
     const { id, first_name, last_name, email_addresses } = event.data;
     const primaryEmail = email_addresses?.find((e) => e.id === event.data.primary_email_address_id);
     const name = [first_name, last_name].filter(Boolean).join(" ") || "User";
-    const convex = new ConvexHttpClient(convexUrl) as ConvexHttpClient & {
-      setAdminAuth: (token: string) => void;
-    };
-    convex.setAdminAuth(convexDeployKey);
 
     // ConvexHttpClient.mutation types expect public refs; internal refs work at runtime with setAdminAuth
     await convex.mutation(
@@ -71,6 +72,16 @@ export async function POST(req: Request) {
         email: primaryEmail?.email_address,
       }
     );
+  } else if (event.type === "user.deleted") {
+    const { id } = event.data;
+    if (id) {
+      await convex.mutation(
+        internal.users.deleteUserDataByClerkId as unknown as Parameters<
+          ConvexHttpClient["mutation"]
+        >[0],
+        { clerkId: id }
+      );
+    }
   }
 
   return new Response("", { status: 200 });

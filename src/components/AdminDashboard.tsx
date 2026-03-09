@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useMutation, usePaginatedQuery, useQuery } from "convex/react";
+import { useAction, useMutation, usePaginatedQuery, useQuery } from "convex/react";
 import { useUser } from "@clerk/nextjs";
 import type { Id } from "convex/_generated/dataModel";
 import { api } from "convex/_generated/api";
@@ -18,7 +18,7 @@ function truncateText(text: string, maxLength: number) {
   return text.slice(0, maxLength).trim() + "…";
 }
 
-type TabId = "moderation" | "activity" | "public-duas";
+type TabId = "moderation" | "activity" | "public-duas" | "users";
 
 export function AdminDashboard() {
   const { user } = useUser();
@@ -30,15 +30,23 @@ export function AdminDashboard() {
     {},
     { initialNumItems: 20 }
   );
+  const usersResult = usePaginatedQuery(
+    api.adminModeration.listAllUsers,
+    {},
+    { initialNumItems: 20 }
+  );
   const approveGuestDua = useMutation(api.adminModeration.approveGuestDua);
   const rejectGuestDua = useMutation(api.adminModeration.rejectGuestDua);
   const updatePublicDua = useMutation(api.adminModeration.updatePublicDua);
+  const deleteUserAndData = useAction(api.adminModeration.deleteUserAndData);
 
   const [activeTab, setActiveTab] = useState<TabId>("moderation");
   const [activeDuaId, setActiveDuaId] = useState<Id<"duas"> | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [editingDuaId, setEditingDuaId] = useState<Id<"duas"> | null>(null);
   const [editingText, setEditingText] = useState("");
+  const [deletingUserId, setDeletingUserId] = useState<Id<"users"> | null>(null);
+  const [deleteUserError, setDeleteUserError] = useState<string | null>(null);
 
   const authSource = stats ?? moderationQueue;
   const isAuthorized = authSource?.isAuthorized === true;
@@ -66,6 +74,27 @@ export function AdminDashboard() {
       setActionError(
         error instanceof Error ? error.message : "Failed to update dua."
       );
+    }
+  }
+
+  async function handleDeleteUser(userId: Id<"users">, clerkId: string, name: string) {
+    if (
+      !window.confirm(
+        `Permanently delete "${name}" and all their data (duas, groups, ameens)? This cannot be undone.`
+      )
+    ) {
+      return;
+    }
+    setDeleteUserError(null);
+    setDeletingUserId(userId);
+    try {
+      await deleteUserAndData({ userId, clerkId });
+    } catch (error) {
+      setDeleteUserError(
+        error instanceof Error ? error.message : "Failed to delete user."
+      );
+    } finally {
+      setDeletingUserId(null);
     }
   }
 
@@ -308,6 +337,32 @@ export function AdminDashboard() {
           >
             Public Duas
           </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === "users"}
+            aria-controls="users-panel"
+            id="users-tab"
+            onClick={() => setActiveTab("users")}
+            style={{
+              padding: "12px 20px",
+              background: "none",
+              border: "none",
+              borderBottom:
+                activeTab === "users"
+                  ? "2px solid var(--btn-bg)"
+                  : "2px solid transparent",
+              color:
+                activeTab === "users"
+                  ? "var(--text-primary)"
+                  : "var(--text-secondary)",
+              fontWeight: activeTab === "users" ? 600 : 400,
+              cursor: "pointer",
+              marginBottom: "-1px",
+            }}
+          >
+            Users
+          </button>
         </div>
 
         {/* Moderation tab */}
@@ -318,23 +373,11 @@ export function AdminDashboard() {
           hidden={activeTab !== "moderation"}
           style={{ display: "grid", gap: "24px" }}
         >
-          <div className="glass-panel" style={{ display: "grid", gap: "8px" }}>
-            <h2 style={{ fontSize: "1.25rem", fontWeight: 600 }}>
-              Moderation Queue
-            </h2>
-            <p style={{ color: "var(--text-secondary)" }}>
-              Review guest public-wall submissions flagged by the local
-              moderation rules.
+          {actionError ? (
+            <p className="text-error" role="alert" aria-live="polite">
+              {actionError}
             </p>
-            <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem" }}>
-              Pending items: {moderationQueue?.pendingDuas.length ?? 0}
-            </p>
-            {actionError ? (
-              <p className="text-error" role="alert" aria-live="polite">
-                {actionError}
-              </p>
-            ) : null}
-          </div>
+          ) : null}
 
           {moderationQueue?.pendingDuas.length === 0 ? (
             <div className="glass-panel">
@@ -453,15 +496,6 @@ export function AdminDashboard() {
           hidden={activeTab !== "activity"}
           style={{ display: "grid", gap: "16px" }}
         >
-          <div className="glass-panel" style={{ display: "grid", gap: "8px" }}>
-            <h2 style={{ fontSize: "1.25rem", fontWeight: 600 }}>
-              Recent Moderation Activity
-            </h2>
-            <p style={{ color: "var(--text-secondary)" }}>
-              Last 20 approved or rejected guest submissions.
-            </p>
-          </div>
-
           {recentActivity === undefined ? (
             <div className="glass-panel">
               <p style={{ color: "var(--text-secondary)" }}>
@@ -553,16 +587,6 @@ export function AdminDashboard() {
           hidden={activeTab !== "public-duas"}
           style={{ display: "grid", gap: "16px" }}
         >
-          <div className="glass-panel" style={{ display: "grid", gap: "8px" }}>
-            <h2 style={{ fontSize: "1.25rem", fontWeight: 600 }}>
-              All Public Duas
-            </h2>
-            <p style={{ color: "var(--text-secondary)" }}>
-              Every dua on the public wall — approved, pending review, and
-              rejected. Includes guest and authenticated submissions.
-            </p>
-          </div>
-
           {publicDuasResult.status === "LoadingFirstPage" ? (
             <div className="glass-panel">
               <p style={{ color: "var(--text-secondary)" }}>
@@ -650,11 +674,13 @@ export function AdminDashboard() {
                       )}
                       <span
                         style={{
+                          display: "inline-block",
                           borderRadius: "999px",
                           border: "1px solid var(--border-subtle)",
                           padding: "4px 8px",
                           fontSize: "0.75rem",
                           color: "var(--text-secondary)",
+                          textAlign: "center",
                         }}
                       >
                         {dua.ameen} Ameen
@@ -756,6 +782,139 @@ export function AdminDashboard() {
                     type="button"
                     className="btn-secondary"
                     onClick={() => publicDuasResult.loadMore(20)}
+                  >
+                    Load more
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* Users tab */}
+        <div
+          role="tabpanel"
+          id="users-panel"
+          aria-labelledby="users-tab"
+          hidden={activeTab !== "users"}
+          style={{ display: "grid", gap: "16px" }}
+        >
+          {deleteUserError ? (
+            <p className="text-error" role="alert" aria-live="polite">
+              {deleteUserError}
+            </p>
+          ) : null}
+          {usersResult.status === "LoadingFirstPage" ? (
+            <div className="glass-panel">
+              <p style={{ color: "var(--text-secondary)" }}>
+                Loading users…
+              </p>
+            </div>
+          ) : usersResult.results.length === 0 ? (
+            <div className="glass-panel">
+              <p style={{ color: "var(--text-secondary)" }}>
+                No users yet.
+              </p>
+            </div>
+          ) : (
+            <>
+              {usersResult.results.map((u) => {
+                const initial = (u.name || "?").charAt(0).toUpperCase();
+                const isDeleting = deletingUserId === u._id;
+                return (
+                  <article
+                    key={u._id}
+                    className="glass-panel"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: "16px",
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "12px",
+                        minWidth: 0,
+                        flex: 1,
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: 40,
+                          height: 40,
+                          borderRadius: "50%",
+                          background: "var(--color-soft)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: "1rem",
+                          fontWeight: 600,
+                          color: "var(--text-primary)",
+                          flexShrink: 0,
+                        }}
+                      >
+                        {initial}
+                      </div>
+                      <div style={{ display: "grid", gap: "2px", minWidth: 0 }}>
+                        <p
+                          style={{
+                            fontSize: "1rem",
+                            fontWeight: 600,
+                            margin: 0,
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {u.name || "Unnamed"}
+                        </p>
+                        <p
+                          style={{
+                            color: "var(--text-secondary)",
+                            fontSize: "0.85rem",
+                            margin: 0,
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {u.email ?? "—"}
+                        </p>
+                        <p
+                          style={{
+                            color: "var(--text-secondary)",
+                            fontSize: "0.75rem",
+                            margin: 0,
+                          }}
+                        >
+                          Joined {new Date(u._creationTime).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      className="btn-sign-out"
+                      disabled={isDeleting}
+                      style={{ flexShrink: 0 }}
+                      onClick={() =>
+                        void handleDeleteUser(u._id, u.clerkId, u.name || "User")
+                      }
+                    >
+                      {isDeleting ? "Deleting…" : "Delete"}
+                    </button>
+                  </article>
+                );
+              })}
+              {usersResult.status === "CanLoadMore" && (
+                <div style={{ display: "flex", justifyContent: "center" }}>
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    onClick={() => usersResult.loadMore(20)}
                   >
                     Load more
                   </button>

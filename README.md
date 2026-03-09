@@ -53,6 +53,8 @@ Copy `.env.example` to `.env.local` and fill in:
 - `CLERK_JWT_ISSUER_DOMAIN` — from Clerk (e.g. `https://xxx.clerk.accounts.dev`)
 - `CONVEX_DEPLOY_KEY` — Convex deploy/admin key for server-side internal mutation access
 
+For admin user deletion (Users tab in Admin Dashboard), set `CLERK_SECRET_KEY` in the Convex dashboard environment variables so the `deleteUserAndData` action can call the Clerk API.
+
 ### 5. Run the app
 
 ```bash

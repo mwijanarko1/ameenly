@@ -36,6 +36,17 @@ function hashIp(ip: string): string {
   return createHash("sha256").update(ip).digest("hex");
 }
 
+function extractConvexErrorMessage(raw: string): string {
+  // Convex wraps thrown errors as:
+  // "[Request ID: <id>] Server Error Uncaught Error: <message>\n  at ..."
+  const match = /Uncaught Error: (.+?)(?:\n|$)/.exec(raw);
+  if (match?.[1]) return match[1].trim();
+  // Fallback: strip everything before the first newline that looks like a header
+  const newlineIdx = raw.indexOf("\n");
+  if (newlineIdx !== -1) return raw.slice(0, newlineIdx).trim();
+  return raw;
+}
+
 export async function submitPublicDua(
   formData: FormData
 ): Promise<SubmitPublicDuaResult> {
@@ -97,10 +108,8 @@ export async function submitPublicDua(
       return { status: result.status };
     }
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Something went wrong";
-    if (message.includes("Rate limit")) {
-      return { error: message };
-    }
+    const raw = err instanceof Error ? err.message : "Something went wrong";
+    const message = extractConvexErrorMessage(raw);
     return { error: message };
   }
 }

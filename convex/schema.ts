@@ -6,7 +6,8 @@ export default defineSchema({
     clerkId: v.string(),
     name: v.string(),
     email: v.optional(v.string()),
-  }).index("by_clerkId", ["clerkId"]),
+  })
+    .index("by_clerkId", ["clerkId"]),
 
   siteAdmins: defineTable({
     clerkId: v.string(),
