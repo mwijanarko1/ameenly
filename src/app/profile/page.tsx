@@ -178,6 +178,7 @@ function SignedInProfile() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [ameenDeckIndex, setAmeenDeckIndex] = useState(0);
+  const [mineDeckIndex, setMineDeckIndex] = useState(0);
   const displayNameInputRef = useRef<HTMLInputElement>(null);
   const result = usePaginatedQuery(
     api.duas.listMyDuas,
@@ -192,9 +193,29 @@ function SignedInProfile() {
 
   const duas = result.results as ProfileDua[];
   const ameenDuas = ameenResult.results as AmeenDua[];
+  const mineCanLoadMore = result.status === "CanLoadMore";
+  const mineLoadMore = result.loadMore;
   const ameenCanLoadMore = ameenResult.status === "CanLoadMore";
   const ameenLoadMore = ameenResult.loadMore;
   const { isAdmin } = useQuery(api.adminModeration.isSiteAdmin) ?? { isAdmin: false };
+
+  const mineCards = duas.map((dua) => {
+    const locationLabel =
+      dua.visibility === "group"
+        ? dua.groupName ?? "Private Group"
+        : "Public Wall";
+    return (
+      <DuaCardSlide
+        key={dua._id}
+        dua={{
+          ...dua,
+          authorName: dua.name?.trim() || locationLabel,
+          hasCurrentUserSaidAmeen: dua.hasCurrentUserSaidAmeen ?? false,
+        }}
+        canReport={false}
+      />
+    );
+  });
 
   const ameenCards = ameenDuas.map((dua) => (
     <DuaCardSlide
@@ -203,6 +224,12 @@ function SignedInProfile() {
       canReport={dua.visibility === "public"}
     />
   ));
+
+  useEffect(() => {
+    if (!mineCanLoadMore) return;
+    if (mineDeckIndex < Math.max(mineCards.length - 3, 0)) return;
+    mineLoadMore(10);
+  }, [mineCanLoadMore, mineCards.length, mineDeckIndex, mineLoadMore]);
 
   useEffect(() => {
     if (!ameenCanLoadMore) return;
@@ -493,79 +520,16 @@ function SignedInProfile() {
                 </Link>
               </div>
             ) : (
-              <>
-                {duas.map((dua, i) => {
-                  const locationLabel =
-                    dua.visibility === "group"
-                      ? dua.groupName ?? "Private Group"
-                      : "Public Wall";
-                  return (
-                    <div
-                      key={dua._id}
-                      style={{
-                        padding: "12px 16px",
-                        borderTop: i === 0 ? "none" : "1px solid var(--border-subtle)",
-                      }}
-                    >
-                      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: "8px", marginBottom: "4px" }}>
-                        <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--text-accent)" }}>
-                          {locationLabel}
-                        </span>
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "8px",
-                            flexShrink: 0,
-                          }}
-                        >
-                          {dua.isAnonymous ? (
-                            <span
-                              style={{
-                                fontSize: "0.68rem",
-                                color: "var(--text-secondary)",
-                                border: "1px solid var(--border-subtle)",
-                                borderRadius: "999px",
-                                padding: "2px 8px",
-                              }}
-                            >
-                              Anonymous
-                            </span>
-                          ) : null}
-                          <span style={{ fontSize: "0.72rem", color: "var(--text-secondary)" }}>
-                            {formatTimeAgo(dua.createdAt)}
-                          </span>
-                        </div>
-                      </div>
-                      <p
-                        style={{
-                          fontSize: "0.875rem",
-                          color: "var(--text-primary)",
-                          lineHeight: 1.5,
-                          display: "-webkit-box",
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: "vertical",
-                          overflow: "hidden",
-                        }}
-                      >
-                        {dua.text}
-                      </p>
-                    </div>
-                  );
-                })}
-                {result.status === "CanLoadMore" && (
-                  <div style={{ padding: "12px 16px", borderTop: "1px solid var(--border-subtle)", textAlign: "center" }}>
-                    <button type="button" onClick={() => result.loadMore(10)} className="btn-ameen">
-                      Load More
-                    </button>
-                  </div>
-                )}
+              <div className="profile-ameen-deck dua-deck-wrapper">
+                <SwipeCardDeck onCardChange={setMineDeckIndex}>
+                  {mineCards}
+                </SwipeCardDeck>
                 {result.status === "LoadingMore" && (
-                  <p style={{ padding: "12px 16px", textAlign: "center", color: "var(--text-secondary)", fontSize: "0.8rem" }}>
+                  <p style={{ padding: "12px 16px", textAlign: "center", color: "var(--text-secondary)", fontSize: "0.8rem", margin: 0 }}>
                     Loading…
                   </p>
                 )}
-              </>
+              </div>
             )}
           </>
         )}
