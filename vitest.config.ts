@@ -11,8 +11,15 @@ export default defineConfig({
     globals: true,
   },
   resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
-    },
+    alias: [
+      {
+        find: /^convex\/_generated\/(.*)$/,
+        replacement: path.resolve(__dirname, "./convex/_generated/$1"),
+      },
+      {
+        find: "@",
+        replacement: path.resolve(__dirname, "./src"),
+      },
+    ],
   },
 });

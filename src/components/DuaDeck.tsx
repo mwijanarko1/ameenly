@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { usePaginatedQuery } from "convex/react";
 import { api } from "convex/_generated/api";
@@ -41,6 +42,7 @@ type DuaDeckProps =
     };
 
 export function DuaDeck(props: DuaDeckProps) {
+  const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const publicResult = usePaginatedQuery(
     api.duas.listPublicDuas,
     props.mode === "public" ? {} : "skip",
@@ -55,9 +57,32 @@ export function DuaDeck(props: DuaDeckProps) {
 
   const result = props.mode === "public" ? publicResult : groupResult;
   const duas = result.results;
+  const loadMore = result.loadMore;
   const canLoadMore = result.status === "CanLoadMore";
 
   const isGroupEmpty = props.mode === "group" && duas.length === 0;
+
+  const cards =
+    props.mode === "public"
+      ? [
+          <HeroCard key="hero" />,
+          ...duas.map((dua) => (
+            <DuaCardSlide key={dua._id} dua={dua} canReport />
+          )),
+        ]
+      : duas.map((dua) => <DuaCardSlide key={dua._id} dua={dua} />);
+
+  useEffect(() => {
+    if (!canLoadMore) {
+      return;
+    }
+
+    if (currentCardIndex < Math.max(cards.length - 3, 0)) {
+      return;
+    }
+
+    loadMore(10);
+  }, [canLoadMore, cards.length, currentCardIndex, loadMore]);
 
   if (isGroupEmpty) {
     return (
@@ -92,25 +117,9 @@ export function DuaDeck(props: DuaDeckProps) {
     );
   }
 
-  const cards =
-    props.mode === "public"
-      ? [
-          <HeroCard key="hero" />,
-          ...duas.map((dua) => (
-            <DuaCardSlide key={dua._id} dua={dua} canReport />
-          )),
-        ]
-      : duas.map((dua) => <DuaCardSlide key={dua._id} dua={dua} />);
-
-  function handleCardChange(index: number) {
-    if (index >= cards.length - 3 && canLoadMore) {
-      result.loadMore(10);
-    }
-  }
-
   return (
     <div className="dua-deck-wrapper">
-      <SwipeCardDeck onCardChange={handleCardChange}>{cards}</SwipeCardDeck>
+      <SwipeCardDeck onCardChange={setCurrentCardIndex}>{cards}</SwipeCardDeck>
     </div>
   );
 }

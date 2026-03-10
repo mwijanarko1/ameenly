@@ -1,0 +1,2966 @@
+{
+  "url": "https://oceanic-wren-903.convex.cloud",
+  "functions": [
+    {
+      "args": {
+        "type": "object",
+        "value": {
+          "paginationOpts": {
+            "fieldType": {
+              "type": "object",
+              "value": {
+                "cursor": {
+                  "fieldType": {
+                    "type": "union",
+                    "value": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "optional": false
+                },
+                "endCursor": {
+                  "fieldType": {
+                    "type": "union",
+                    "value": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "optional": true
+                },
+                "id": {
+                  "fieldType": {
+                    "type": "number"
+                  },
+                  "optional": true
+                },
+                "maximumBytesRead": {
+                  "fieldType": {
+                    "type": "number"
+                  },
+                  "optional": true
+                },
+                "maximumRowsRead": {
+                  "fieldType": {
+                    "type": "number"
+                  },
+                  "optional": true
+                },
+                "numItems": {
+                  "fieldType": {
+                    "type": "number"
+                  },
+                  "optional": false
+                }
+              }
+            },
+            "optional": false
+          }
+        }
+      },
+      "functionType": "Query",
+      "identifier": "duas.js:listPublicDuas",
+      "returns": {
+        "type": "object",
+        "value": {
+          "continueCursor": {
+            "fieldType": {
+              "type": "string"
+            },
+            "optional": false
+          },
+          "isDone": {
+            "fieldType": {
+              "type": "boolean"
+            },
+            "optional": false
+          },
+          "page": {
+            "fieldType": {
+              "type": "array",
+              "value": {
+                "type": "object",
+                "value": {
+                  "_creationTime": {
+                    "fieldType": {
+                      "type": "number"
+                    },
+                    "optional": false
+                  },
+                  "_id": {
+                    "fieldType": {
+                      "tableName": "duas",
+                      "type": "id"
+                    },
+                    "optional": false
+                  },
+                  "ameen": {
+                    "fieldType": {
+                      "type": "number"
+                    },
+                    "optional": false
+                  },
+                  "authorName": {
+                    "fieldType": {
+                      "type": "string"
+                    },
+                    "optional": true
+                  },
+                  "createdAt": {
+                    "fieldType": {
+                      "type": "number"
+                    },
+                    "optional": false
+                  },
+                  "groupId": {
+                    "fieldType": {
+                      "tableName": "groups",
+                      "type": "id"
+                    },
+                    "optional": true
+                  },
+                  "hasCurrentUserReported": {
+                    "fieldType": {
+                      "type": "boolean"
+                    },
+                    "optional": false
+                  },
+                  "hasCurrentUserSaidAmeen": {
+                    "fieldType": {
+                      "type": "boolean"
+                    },
+                    "optional": false
+                  },
+                  "isAnonymous": {
+                    "fieldType": {
+                      "type": "boolean"
+                    },
+                    "optional": false
+                  },
+                  "isSeedDua": {
+                    "fieldType": {
+                      "type": "boolean"
+                    },
+                    "optional": true
+                  },
+                  "name": {
+                    "fieldType": {
+                      "type": "string"
+                    },
+                    "optional": true
+                  },
+                  "text": {
+                    "fieldType": {
+                      "type": "string"
+                    },
+                    "optional": false
+                  }
+                }
+              }
+            },
+            "optional": false
+          },
+          "pageStatus": {
+            "fieldType": {
+              "type": "union",
+              "value": [
+                {
+                  "type": "literal",
+                  "value": "SplitRecommended"
+                },
+                {
+                  "type": "literal",
+                  "value": "SplitRequired"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "optional": true
+          },
+          "splitCursor": {
+            "fieldType": {
+              "type": "union",
+              "value": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "optional": true
+          }
+        }
+      },
+      "visibility": {
+        "kind": "public"
+      }
+    },
+    {
+      "args": {
+        "type": "object",
+        "value": {
+          "ipHash": {
+            "fieldType": {
+              "type": "string"
+            },
+            "optional": false
+          },
+          "isAnonymous": {
+            "fieldType": {
+              "type": "boolean"
+            },
+            "optional": false
+          },
+          "name": {
+            "fieldType": {
+              "type": "string"
+            },
+            "optional": true
+          },
+          "text": {
+            "fieldType": {
+              "type": "string"
+            },
+            "optional": false
+          }
+        }
+      },
+      "functionType": "Mutation",
+      "identifier": "duas.js:submitGuestPublicDua",
+      "returns": {
+        "type": "object",
+        "value": {
+          "duaId": {
+            "fieldType": {
+              "tableName": "duas",
+              "type": "id"
+            },
+            "optional": false
+          },
+          "status": {
+            "fieldType": {
+              "type": "union",
+              "value": [
+                {
+                  "type": "literal",
+                  "value": "published"
+                },
+                {
+                  "type": "literal",
+                  "value": "queued_for_review"
+                }
+              ]
+            },
+            "optional": false
+          }
+        }
+      },
+      "visibility": {
+        "kind": "public"
+      }
+    },
+    {
+      "args": {
+        "type": "object",
+        "value": {
+          "isAnonymous": {
+            "fieldType": {
+              "type": "boolean"
+            },
+            "optional": false
+          },
+          "text": {
+            "fieldType": {
+              "type": "string"
+            },
+            "optional": false
+          }
+        }
+      },
+      "functionType": "Mutation",
+      "identifier": "duas.js:submitAuthenticatedPublicDua",
+      "returns": {
+        "type": "object",
+        "value": {
+          "duaId": {
+            "fieldType": {
+              "tableName": "duas",
+              "type": "id"
+            },
+            "optional": false
+          },
+          "status": {
+            "fieldType": {
+              "type": "union",
+              "value": [
+                {
+                  "type": "literal",
+                  "value": "published"
+                },
+                {
+                  "type": "literal",
+                  "value": "queued_for_review"
+                }
+              ]
+            },
+            "optional": false
+          }
+        }
+      },
+      "visibility": {
+        "kind": "public"
+      }
+    },
+    {
+      "args": {
+        "type": "object",
+        "value": {
+          "clerkId": {
+            "fieldType": {
+              "type": "string"
+            },
+            "optional": false
+          },
+          "isAnonymous": {
+            "fieldType": {
+              "type": "boolean"
+            },
+            "optional": false
+          },
+          "text": {
+            "fieldType": {
+              "type": "string"
+            },
+            "optional": false
+          }
+        }
+      },
+      "functionType": "Mutation",
+      "identifier": "duas.js:submitAuthenticatedPublicDuaFromServer",
+      "returns": {
+        "type": "object",
+        "value": {
+          "duaId": {
+            "fieldType": {
+              "tableName": "duas",
+              "type": "id"
+            },
+            "optional": false
+          },
+          "status": {
+            "fieldType": {
+              "type": "union",
+              "value": [
+                {
+                  "type": "literal",
+                  "value": "published"
+                },
+                {
+                  "type": "literal",
+                  "value": "queued_for_review"
+                }
+              ]
+            },
+            "optional": false
+          }
+        }
+      },
+      "visibility": {
+        "kind": "internal"
+      }
+    },
+    {
+      "args": {
+        "type": "object",
+        "value": {
+          "paginationOpts": {
+            "fieldType": {
+              "type": "object",
+              "value": {
+                "cursor": {
+                  "fieldType": {
+                    "type": "union",
+                    "value": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "optional": false
+                },
+                "endCursor": {
+                  "fieldType": {
+                    "type": "union",
+                    "value": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "optional": true
+                },
+                "id": {
+                  "fieldType": {
+                    "type": "number"
+                  },
+                  "optional": true
+                },
+                "maximumBytesRead": {
+                  "fieldType": {
+                    "type": "number"
+                  },
+                  "optional": true
+                },
+                "maximumRowsRead": {
+                  "fieldType": {
+                    "type": "number"
+                  },
+                  "optional": true
+                },
+                "numItems": {
+                  "fieldType": {
+                    "type": "number"
+                  },
+                  "optional": false
+                }
+              }
+            },
+            "optional": false
+          }
+        }
+      },
+      "functionType": "Query",
+      "identifier": "duas.js:listDuasUserSaidAmeenTo",
+      "returns": {
+        "type": "object",
+        "value": {
+          "continueCursor": {
+            "fieldType": {
+              "type": "string"
+            },
+            "optional": false
+          },
+          "isDone": {
+            "fieldType": {
+              "type": "boolean"
+            },
+            "optional": false
+          },
+          "page": {
+            "fieldType": {
+              "type": "array",
+              "value": {
+                "type": "object",
+                "value": {
+                  "_creationTime": {
+                    "fieldType": {
+                      "type": "number"
+                    },
+                    "optional": false
+                  },
+                  "_id": {
+                    "fieldType": {
+                      "tableName": "duas",
+                      "type": "id"
+                    },
+                    "optional": false
+                  },
+                  "ameen": {
+                    "fieldType": {
+                      "type": "number"
+                    },
+                    "optional": false
+                  },
+                  "authorName": {
+                    "fieldType": {
+                      "type": "string"
+                    },
+                    "optional": true
+                  },
+                  "createdAt": {
+                    "fieldType": {
+                      "type": "number"
+                    },
+                    "optional": false
+                  },
+                  "groupId": {
+                    "fieldType": {
+                      "tableName": "groups",
+                      "type": "id"
+                    },
+                    "optional": true
+                  },
+                  "groupName": {
+                    "fieldType": {
+                      "type": "string"
+                    },
+                    "optional": true
+                  },
+                  "isAnonymous": {
+                    "fieldType": {
+                      "type": "boolean"
+                    },
+                    "optional": false
+                  },
+                  "isSeedDua": {
+                    "fieldType": {
+                      "type": "boolean"
+                    },
+                    "optional": true
+                  },
+                  "name": {
+                    "fieldType": {
+                      "type": "string"
+                    },
+                    "optional": true
+                  },
+                  "text": {
+                    "fieldType": {
+                      "type": "string"
+                    },
+                    "optional": false
+                  },
+                  "visibility": {
+                    "fieldType": {
+                      "type": "union",
+                      "value": [
+                        {
+                          "type": "literal",
+                          "value": "group"
+                        },
+                        {
+                          "type": "literal",
+                          "value": "public"
+                        }
+                      ]
+                    },
+                    "optional": false
+                  }
+                }
+              }
+            },
+            "optional": false
+          },
+          "pageStatus": {
+            "fieldType": {
+              "type": "union",
+              "value": [
+                {
+                  "type": "literal",
+                  "value": "SplitRecommended"
+                },
+                {
+                  "type": "literal",
+                  "value": "SplitRequired"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "optional": true
+          },
+          "splitCursor": {
+            "fieldType": {
+              "type": "union",
+              "value": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "optional": true
+          }
+        }
+      },
+      "visibility": {
+        "kind": "public"
+      }
+    },
+    {
+      "args": {
+        "type": "object",
+        "value": {
+          "paginationOpts": {
+            "fieldType": {
+              "type": "object",
+              "value": {
+                "cursor": {
+                  "fieldType": {
+                    "type": "union",
+                    "value": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "optional": false
+                },
+                "endCursor": {
+                  "fieldType": {
+                    "type": "union",
+                    "value": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "optional": true
+                },
+                "id": {
+                  "fieldType": {
+                    "type": "number"
+                  },
+                  "optional": true
+                },
+                "maximumBytesRead": {
+                  "fieldType": {
+                    "type": "number"
+                  },
+                  "optional": true
+                },
+                "maximumRowsRead": {
+                  "fieldType": {
+                    "type": "number"
+                  },
+                  "optional": true
+                },
+                "numItems": {
+                  "fieldType": {
+                    "type": "number"
+                  },
+                  "optional": false
+                }
+              }
+            },
+            "optional": false
+          }
+        }
+      },
+      "functionType": "Query",
+      "identifier": "duas.js:listMyDuas",
+      "returns": {
+        "type": "object",
+        "value": {
+          "continueCursor": {
+            "fieldType": {
+              "type": "string"
+            },
+            "optional": false
+          },
+          "isDone": {
+            "fieldType": {
+              "type": "boolean"
+            },
+            "optional": false
+          },
+          "page": {
+            "fieldType": {
+              "type": "array",
+              "value": {
+                "type": "object",
+                "value": {
+                  "_creationTime": {
+                    "fieldType": {
+                      "type": "number"
+                    },
+                    "optional": false
+                  },
+                  "_id": {
+                    "fieldType": {
+                      "tableName": "duas",
+                      "type": "id"
+                    },
+                    "optional": false
+                  },
+                  "ameen": {
+                    "fieldType": {
+                      "type": "number"
+                    },
+                    "optional": false
+                  },
+                  "createdAt": {
+                    "fieldType": {
+                      "type": "number"
+                    },
+                    "optional": false
+                  },
+                  "groupId": {
+                    "fieldType": {
+                      "tableName": "groups",
+                      "type": "id"
+                    },
+                    "optional": true
+                  },
+                  "groupName": {
+                    "fieldType": {
+                      "type": "string"
+                    },
+                    "optional": true
+                  },
+                  "hasCurrentUserSaidAmeen": {
+                    "fieldType": {
+                      "type": "boolean"
+                    },
+                    "optional": false
+                  },
+                  "isAnonymous": {
+                    "fieldType": {
+                      "type": "boolean"
+                    },
+                    "optional": false
+                  },
+                  "name": {
+                    "fieldType": {
+                      "type": "string"
+                    },
+                    "optional": true
+                  },
+                  "text": {
+                    "fieldType": {
+                      "type": "string"
+                    },
+                    "optional": false
+                  },
+                  "visibility": {
+                    "fieldType": {
+                      "type": "union",
+                      "value": [
+                        {
+                          "type": "literal",
+                          "value": "group"
+                        },
+                        {
+                          "type": "literal",
+                          "value": "public"
+                        }
+                      ]
+                    },
+                    "optional": false
+                  }
+                }
+              }
+            },
+            "optional": false
+          },
+          "pageStatus": {
+            "fieldType": {
+              "type": "union",
+              "value": [
+                {
+                  "type": "literal",
+                  "value": "SplitRecommended"
+                },
+                {
+                  "type": "literal",
+                  "value": "SplitRequired"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "optional": true
+          },
+          "splitCursor": {
+            "fieldType": {
+              "type": "union",
+              "value": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "optional": true
+          }
+        }
+      },
+      "visibility": {
+        "kind": "public"
+      }
+    },
+    {
+      "args": {
+        "type": "object",
+        "value": {
+          "duaId": {
+            "fieldType": {
+              "tableName": "duas",
+              "type": "id"
+            },
+            "optional": false
+          }
+        }
+      },
+      "functionType": "Mutation",
+      "identifier": "duas.js:sayAmeen",
+      "returns": {
+        "type": "null"
+      },
+      "visibility": {
+        "kind": "public"
+      }
+    },
+    {
+      "args": {
+        "type": "object",
+        "value": {
+          "duaId": {
+            "fieldType": {
+              "tableName": "duas",
+              "type": "id"
+            },
+            "optional": false
+          },
+          "reason": {
+            "fieldType": {
+              "type": "union",
+              "value": [
+                {
+                  "type": "literal",
+                  "value": "spam"
+                },
+                {
+                  "type": "literal",
+                  "value": "harassment"
+                },
+                {
+                  "type": "literal",
+                  "value": "hate_speech"
+                },
+                {
+                  "type": "literal",
+                  "value": "inappropriate"
+                },
+                {
+                  "type": "literal",
+                  "value": "other"
+                }
+              ]
+            },
+            "optional": false
+          }
+        }
+      },
+      "functionType": "Mutation",
+      "identifier": "duas.js:reportDua",
+      "returns": {
+        "type": "null"
+      },
+      "visibility": {
+        "kind": "public"
+      }
+    },
+    {
+      "args": {
+        "type": "object",
+        "value": {
+          "groupId": {
+            "fieldType": {
+              "tableName": "groups",
+              "type": "id"
+            },
+            "optional": false
+          },
+          "paginationOpts": {
+            "fieldType": {
+              "type": "object",
+              "value": {
+                "cursor": {
+                  "fieldType": {
+                    "type": "union",
+                    "value": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "optional": false
+                },
+                "endCursor": {
+                  "fieldType": {
+                    "type": "union",
+                    "value": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "optional": true
+                },
+                "id": {
+                  "fieldType": {
+                    "type": "number"
+                  },
+                  "optional": true
+                },
+                "maximumBytesRead": {
+                  "fieldType": {
+                    "type": "number"
+                  },
+                  "optional": true
+                },
+                "maximumRowsRead": {
+                  "fieldType": {
+                    "type": "number"
+                  },
+                  "optional": true
+                },
+                "numItems": {
+                  "fieldType": {
+                    "type": "number"
+                  },
+                  "optional": false
+                }
+              }
+            },
+            "optional": false
+          }
+        }
+      },
+      "functionType": "Query",
+      "identifier": "groupDuas.js:listGroupDuas",
+      "returns": {
+        "type": "object",
+        "value": {
+          "continueCursor": {
+            "fieldType": {
+              "type": "string"
+            },
+            "optional": false
+          },
+          "isDone": {
+            "fieldType": {
+              "type": "boolean"
+            },
+            "optional": false
+          },
+          "page": {
+            "fieldType": {
+              "type": "array",
+              "value": {
+                "type": "object",
+                "value": {
+                  "_creationTime": {
+                    "fieldType": {
+                      "type": "number"
+                    },
+                    "optional": false
+                  },
+                  "_id": {
+                    "fieldType": {
+                      "tableName": "duas",
+                      "type": "id"
+                    },
+                    "optional": false
+                  },
+                  "ameen": {
+                    "fieldType": {
+                      "type": "number"
+                    },
+                    "optional": false
+                  },
+                  "authorName": {
+                    "fieldType": {
+                      "type": "string"
+                    },
+                    "optional": true
+                  },
+                  "createdAt": {
+                    "fieldType": {
+                      "type": "number"
+                    },
+                    "optional": false
+                  },
+                  "groupId": {
+                    "fieldType": {
+                      "tableName": "groups",
+                      "type": "id"
+                    },
+                    "optional": true
+                  },
+                  "hasCurrentUserSaidAmeen": {
+                    "fieldType": {
+                      "type": "boolean"
+                    },
+                    "optional": false
+                  },
+                  "isAnonymous": {
+                    "fieldType": {
+                      "type": "boolean"
+                    },
+                    "optional": false
+                  },
+                  "name": {
+                    "fieldType": {
+                      "type": "string"
+                    },
+                    "optional": true
+                  },
+                  "text": {
+                    "fieldType": {
+                      "type": "string"
+                    },
+                    "optional": false
+                  }
+                }
+              }
+            },
+            "optional": false
+          },
+          "pageStatus": {
+            "fieldType": {
+              "type": "union",
+              "value": [
+                {
+                  "type": "literal",
+                  "value": "SplitRecommended"
+                },
+                {
+                  "type": "literal",
+                  "value": "SplitRequired"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "optional": true
+          },
+          "splitCursor": {
+            "fieldType": {
+              "type": "union",
+              "value": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "optional": true
+          }
+        }
+      },
+      "visibility": {
+        "kind": "public"
+      }
+    },
+    {
+      "args": {
+        "type": "object",
+        "value": {
+          "groupId": {
+            "fieldType": {
+              "tableName": "groups",
+              "type": "id"
+            },
+            "optional": false
+          },
+          "isAnonymous": {
+            "fieldType": {
+              "type": "boolean"
+            },
+            "optional": false
+          },
+          "text": {
+            "fieldType": {
+              "type": "string"
+            },
+            "optional": false
+          }
+        }
+      },
+      "functionType": "Mutation",
+      "identifier": "groupDuas.js:submitGroupDua",
+      "returns": {
+        "tableName": "duas",
+        "type": "id"
+      },
+      "visibility": {
+        "kind": "public"
+      }
+    },
+    {
+      "args": {
+        "type": "object",
+        "value": {
+          "duaId": {
+            "fieldType": {
+              "tableName": "duas",
+              "type": "id"
+            },
+            "optional": false
+          },
+          "groupId": {
+            "fieldType": {
+              "tableName": "groups",
+              "type": "id"
+            },
+            "optional": false
+          }
+        }
+      },
+      "functionType": "Mutation",
+      "identifier": "groupDuas.js:deleteGroupDua",
+      "returns": {
+        "type": "null"
+      },
+      "visibility": {
+        "kind": "public"
+      }
+    },
+    {
+      "args": {
+        "type": "object",
+        "value": {
+          "description": {
+            "fieldType": {
+              "type": "string"
+            },
+            "optional": true
+          },
+          "name": {
+            "fieldType": {
+              "type": "string"
+            },
+            "optional": false
+          }
+        }
+      },
+      "functionType": "Mutation",
+      "identifier": "groups.js:createGroup",
+      "returns": {
+        "type": "object",
+        "value": {
+          "groupId": {
+            "fieldType": {
+              "tableName": "groups",
+              "type": "id"
+            },
+            "optional": false
+          },
+          "inviteCode": {
+            "fieldType": {
+              "type": "string"
+            },
+            "optional": false
+          }
+        }
+      },
+      "visibility": {
+        "kind": "public"
+      }
+    },
+    {
+      "args": {
+        "type": "object",
+        "value": {
+          "inviteCode": {
+            "fieldType": {
+              "type": "string"
+            },
+            "optional": false
+          }
+        }
+      },
+      "functionType": "Mutation",
+      "identifier": "groups.js:joinGroup",
+      "returns": {
+        "tableName": "groups",
+        "type": "id"
+      },
+      "visibility": {
+        "kind": "public"
+      }
+    },
+    {
+      "args": {
+        "type": "object",
+        "value": {
+          "groupId": {
+            "fieldType": {
+              "tableName": "groups",
+              "type": "id"
+            },
+            "optional": false
+          },
+          "userId": {
+            "fieldType": {
+              "tableName": "users",
+              "type": "id"
+            },
+            "optional": false
+          }
+        }
+      },
+      "functionType": "Mutation",
+      "identifier": "groups.js:promoteToAdmin",
+      "returns": {
+        "type": "null"
+      },
+      "visibility": {
+        "kind": "public"
+      }
+    },
+    {
+      "args": {
+        "type": "object",
+        "value": {}
+      },
+      "functionType": "Query",
+      "identifier": "groups.js:getMyGroups",
+      "returns": {
+        "type": "array",
+        "value": {
+          "type": "object",
+          "value": {
+            "_creationTime": {
+              "fieldType": {
+                "type": "number"
+              },
+              "optional": false
+            },
+            "_id": {
+              "fieldType": {
+                "tableName": "groups",
+                "type": "id"
+              },
+              "optional": false
+            },
+            "createdAt": {
+              "fieldType": {
+                "type": "number"
+              },
+              "optional": false
+            },
+            "creatorId": {
+              "fieldType": {
+                "tableName": "users",
+                "type": "id"
+              },
+              "optional": false
+            },
+            "description": {
+              "fieldType": {
+                "type": "string"
+              },
+              "optional": true
+            },
+            "inviteCode": {
+              "fieldType": {
+                "type": "string"
+              },
+              "optional": false
+            },
+            "name": {
+              "fieldType": {
+                "type": "string"
+              },
+              "optional": false
+            }
+          }
+        }
+      },
+      "visibility": {
+        "kind": "public"
+      }
+    },
+    {
+      "args": {
+        "type": "object",
+        "value": {
+          "groupId": {
+            "fieldType": {
+              "tableName": "groups",
+              "type": "id"
+            },
+            "optional": false
+          }
+        }
+      },
+      "functionType": "Query",
+      "identifier": "groups.js:getGroup",
+      "returns": {
+        "type": "union",
+        "value": [
+          {
+            "type": "object",
+            "value": {
+              "_creationTime": {
+                "fieldType": {
+                  "type": "number"
+                },
+                "optional": false
+              },
+              "_id": {
+                "fieldType": {
+                  "tableName": "groups",
+                  "type": "id"
+                },
+                "optional": false
+              },
+              "createdAt": {
+                "fieldType": {
+                  "type": "number"
+                },
+                "optional": false
+              },
+              "creatorId": {
+                "fieldType": {
+                  "tableName": "users",
+                  "type": "id"
+                },
+                "optional": false
+              },
+              "description": {
+                "fieldType": {
+                  "type": "string"
+                },
+                "optional": true
+              },
+              "inviteCode": {
+                "fieldType": {
+                  "type": "string"
+                },
+                "optional": false
+              },
+              "name": {
+                "fieldType": {
+                  "type": "string"
+                },
+                "optional": false
+              }
+            }
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "visibility": {
+        "kind": "public"
+      }
+    },
+    {
+      "args": {
+        "type": "object",
+        "value": {
+          "groupId": {
+            "fieldType": {
+              "tableName": "groups",
+              "type": "id"
+            },
+            "optional": false
+          }
+        }
+      },
+      "functionType": "Query",
+      "identifier": "groups.js:getGroupWithMembership",
+      "returns": {
+        "type": "union",
+        "value": [
+          {
+            "type": "object",
+            "value": {
+              "group": {
+                "fieldType": {
+                  "type": "object",
+                  "value": {
+                    "_creationTime": {
+                      "fieldType": {
+                        "type": "number"
+                      },
+                      "optional": false
+                    },
+                    "_id": {
+                      "fieldType": {
+                        "tableName": "groups",
+                        "type": "id"
+                      },
+                      "optional": false
+                    },
+                    "createdAt": {
+                      "fieldType": {
+                        "type": "number"
+                      },
+                      "optional": false
+                    },
+                    "creatorId": {
+                      "fieldType": {
+                        "tableName": "users",
+                        "type": "id"
+                      },
+                      "optional": false
+                    },
+                    "description": {
+                      "fieldType": {
+                        "type": "string"
+                      },
+                      "optional": true
+                    },
+                    "inviteCode": {
+                      "fieldType": {
+                        "type": "string"
+                      },
+                      "optional": false
+                    },
+                    "name": {
+                      "fieldType": {
+                        "type": "string"
+                      },
+                      "optional": false
+                    }
+                  }
+                },
+                "optional": false
+              },
+              "membership": {
+                "fieldType": {
+                  "type": "object",
+                  "value": {
+                    "_creationTime": {
+                      "fieldType": {
+                        "type": "number"
+                      },
+                      "optional": false
+                    },
+                    "_id": {
+                      "fieldType": {
+                        "tableName": "groupMembers",
+                        "type": "id"
+                      },
+                      "optional": false
+                    },
+                    "groupId": {
+                      "fieldType": {
+                        "tableName": "groups",
+                        "type": "id"
+                      },
+                      "optional": false
+                    },
+                    "joinedAt": {
+                      "fieldType": {
+                        "type": "number"
+                      },
+                      "optional": false
+                    },
+                    "role": {
+                      "fieldType": {
+                        "type": "union",
+                        "value": [
+                          {
+                            "type": "literal",
+                            "value": "admin"
+                          },
+                          {
+                            "type": "literal",
+                            "value": "member"
+                          }
+                        ]
+                      },
+                      "optional": false
+                    },
+                    "userId": {
+                      "fieldType": {
+                        "tableName": "users",
+                        "type": "id"
+                      },
+                      "optional": false
+                    }
+                  }
+                },
+                "optional": false
+              }
+            }
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "visibility": {
+        "kind": "public"
+      }
+    },
+    {
+      "args": {
+        "type": "object",
+        "value": {
+          "inviteCode": {
+            "fieldType": {
+              "type": "string"
+            },
+            "optional": false
+          }
+        }
+      },
+      "functionType": "Query",
+      "identifier": "groups.js:getGroupWithMembershipByInviteCode",
+      "returns": {
+        "type": "union",
+        "value": [
+          {
+            "type": "object",
+            "value": {
+              "group": {
+                "fieldType": {
+                  "type": "object",
+                  "value": {
+                    "_creationTime": {
+                      "fieldType": {
+                        "type": "number"
+                      },
+                      "optional": false
+                    },
+                    "_id": {
+                      "fieldType": {
+                        "tableName": "groups",
+                        "type": "id"
+                      },
+                      "optional": false
+                    },
+                    "createdAt": {
+                      "fieldType": {
+                        "type": "number"
+                      },
+                      "optional": false
+                    },
+                    "creatorId": {
+                      "fieldType": {
+                        "tableName": "users",
+                        "type": "id"
+                      },
+                      "optional": false
+                    },
+                    "description": {
+                      "fieldType": {
+                        "type": "string"
+                      },
+                      "optional": true
+                    },
+                    "inviteCode": {
+                      "fieldType": {
+                        "type": "string"
+                      },
+                      "optional": false
+                    },
+                    "name": {
+                      "fieldType": {
+                        "type": "string"
+                      },
+                      "optional": false
+                    }
+                  }
+                },
+                "optional": false
+              },
+              "membership": {
+                "fieldType": {
+                  "type": "object",
+                  "value": {
+                    "_creationTime": {
+                      "fieldType": {
+                        "type": "number"
+                      },
+                      "optional": false
+                    },
+                    "_id": {
+                      "fieldType": {
+                        "tableName": "groupMembers",
+                        "type": "id"
+                      },
+                      "optional": false
+                    },
+                    "groupId": {
+                      "fieldType": {
+                        "tableName": "groups",
+                        "type": "id"
+                      },
+                      "optional": false
+                    },
+                    "joinedAt": {
+                      "fieldType": {
+                        "type": "number"
+                      },
+                      "optional": false
+                    },
+                    "role": {
+                      "fieldType": {
+                        "type": "union",
+                        "value": [
+                          {
+                            "type": "literal",
+                            "value": "admin"
+                          },
+                          {
+                            "type": "literal",
+                            "value": "member"
+                          }
+                        ]
+                      },
+                      "optional": false
+                    },
+                    "userId": {
+                      "fieldType": {
+                        "tableName": "users",
+                        "type": "id"
+                      },
+                      "optional": false
+                    }
+                  }
+                },
+                "optional": false
+              }
+            }
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "visibility": {
+        "kind": "public"
+      }
+    },
+    {
+      "args": {
+        "type": "object",
+        "value": {
+          "groupId": {
+            "fieldType": {
+              "tableName": "groups",
+              "type": "id"
+            },
+            "optional": false
+          },
+          "userId": {
+            "fieldType": {
+              "tableName": "users",
+              "type": "id"
+            },
+            "optional": false
+          }
+        }
+      },
+      "functionType": "Mutation",
+      "identifier": "groups.js:removeMember",
+      "returns": {
+        "type": "null"
+      },
+      "visibility": {
+        "kind": "public"
+      }
+    },
+    {
+      "args": {
+        "type": "object",
+        "value": {
+          "groupId": {
+            "fieldType": {
+              "tableName": "groups",
+              "type": "id"
+            },
+            "optional": false
+          }
+        }
+      },
+      "functionType": "Mutation",
+      "identifier": "groups.js:generateNewInviteCode",
+      "returns": {
+        "type": "string"
+      },
+      "visibility": {
+        "kind": "public"
+      }
+    },
+    {
+      "args": {
+        "type": "object",
+        "value": {
+          "inviteCode": {
+            "fieldType": {
+              "type": "string"
+            },
+            "optional": false
+          }
+        }
+      },
+      "functionType": "Query",
+      "identifier": "groups.js:getGroupByInviteCode",
+      "returns": {
+        "type": "union",
+        "value": [
+          {
+            "type": "object",
+            "value": {
+              "_creationTime": {
+                "fieldType": {
+                  "type": "number"
+                },
+                "optional": false
+              },
+              "_id": {
+                "fieldType": {
+                  "tableName": "groups",
+                  "type": "id"
+                },
+                "optional": false
+              },
+              "createdAt": {
+                "fieldType": {
+                  "type": "number"
+                },
+                "optional": false
+              },
+              "creatorId": {
+                "fieldType": {
+                  "tableName": "users",
+                  "type": "id"
+                },
+                "optional": false
+              },
+              "description": {
+                "fieldType": {
+                  "type": "string"
+                },
+                "optional": true
+              },
+              "inviteCode": {
+                "fieldType": {
+                  "type": "string"
+                },
+                "optional": false
+              },
+              "name": {
+                "fieldType": {
+                  "type": "string"
+                },
+                "optional": false
+              }
+            }
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "visibility": {
+        "kind": "public"
+      }
+    },
+    {
+      "args": {
+        "type": "object",
+        "value": {
+          "inviteCode": {
+            "fieldType": {
+              "type": "string"
+            },
+            "optional": false
+          }
+        }
+      },
+      "functionType": "Query",
+      "identifier": "groups.js:getInvitePreview",
+      "returns": {
+        "type": "union",
+        "value": [
+          {
+            "type": "object",
+            "value": {
+              "description": {
+                "fieldType": {
+                  "type": "string"
+                },
+                "optional": true
+              },
+              "groupId": {
+                "fieldType": {
+                  "tableName": "groups",
+                  "type": "id"
+                },
+                "optional": false
+              },
+              "groupName": {
+                "fieldType": {
+                  "type": "string"
+                },
+                "optional": false
+              },
+              "isAlreadyMember": {
+                "fieldType": {
+                  "type": "boolean"
+                },
+                "optional": false
+              },
+              "memberCount": {
+                "fieldType": {
+                  "type": "number"
+                },
+                "optional": false
+              }
+            }
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "visibility": {
+        "kind": "public"
+      }
+    },
+    {
+      "args": {
+        "type": "object",
+        "value": {
+          "groupId": {
+            "fieldType": {
+              "tableName": "groups",
+              "type": "id"
+            },
+            "optional": false
+          }
+        }
+      },
+      "functionType": "Query",
+      "identifier": "groups.js:getGroupMembers",
+      "returns": {
+        "type": "union",
+        "value": [
+          {
+            "type": "array",
+            "value": {
+              "type": "object",
+              "value": {
+                "_creationTime": {
+                  "fieldType": {
+                    "type": "number"
+                  },
+                  "optional": false
+                },
+                "_id": {
+                  "fieldType": {
+                    "tableName": "groupMembers",
+                    "type": "id"
+                  },
+                  "optional": false
+                },
+                "groupId": {
+                  "fieldType": {
+                    "tableName": "groups",
+                    "type": "id"
+                  },
+                  "optional": false
+                },
+                "joinedAt": {
+                  "fieldType": {
+                    "type": "number"
+                  },
+                  "optional": false
+                },
+                "role": {
+                  "fieldType": {
+                    "type": "union",
+                    "value": [
+                      {
+                        "type": "literal",
+                        "value": "admin"
+                      },
+                      {
+                        "type": "literal",
+                        "value": "member"
+                      }
+                    ]
+                  },
+                  "optional": false
+                },
+                "userId": {
+                  "fieldType": {
+                    "tableName": "users",
+                    "type": "id"
+                  },
+                  "optional": false
+                },
+                "userName": {
+                  "fieldType": {
+                    "type": "string"
+                  },
+                  "optional": false
+                }
+              }
+            }
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "visibility": {
+        "kind": "public"
+      }
+    },
+    {
+      "args": {
+        "type": "object",
+        "value": {}
+      },
+      "functionType": "Mutation",
+      "identifier": "users.js:deleteAccount",
+      "returns": {
+        "type": "any"
+      },
+      "visibility": {
+        "kind": "public"
+      }
+    },
+    {
+      "args": {
+        "type": "object",
+        "value": {
+          "clerkId": {
+            "fieldType": {
+              "type": "string"
+            },
+            "optional": false
+          }
+        }
+      },
+      "functionType": "Mutation",
+      "identifier": "users.js:deleteUserDataByClerkId",
+      "returns": {
+        "type": "any"
+      },
+      "visibility": {
+        "kind": "internal"
+      }
+    },
+    {
+      "args": {
+        "type": "object",
+        "value": {
+          "clerkId": {
+            "fieldType": {
+              "type": "string"
+            },
+            "optional": false
+          },
+          "email": {
+            "fieldType": {
+              "type": "string"
+            },
+            "optional": true
+          },
+          "name": {
+            "fieldType": {
+              "type": "string"
+            },
+            "optional": false
+          }
+        }
+      },
+      "functionType": "Mutation",
+      "identifier": "users.js:upsertUserFromWebhook",
+      "returns": {
+        "type": "any"
+      },
+      "visibility": {
+        "kind": "internal"
+      }
+    },
+    {
+      "args": {
+        "type": "object",
+        "value": {}
+      },
+      "functionType": "Mutation",
+      "identifier": "seed.js:seedDuas",
+      "returns": {
+        "type": "any"
+      },
+      "visibility": {
+        "kind": "internal"
+      }
+    },
+    {
+      "args": {
+        "type": "object",
+        "value": {}
+      },
+      "functionType": "Query",
+      "identifier": "adminModeration.js:isSiteAdmin",
+      "returns": {
+        "type": "object",
+        "value": {
+          "isAdmin": {
+            "fieldType": {
+              "type": "boolean"
+            },
+            "optional": false
+          }
+        }
+      },
+      "visibility": {
+        "kind": "public"
+      }
+    },
+    {
+      "args": {
+        "type": "object",
+        "value": {}
+      },
+      "functionType": "Query",
+      "identifier": "adminModeration.js:listPendingGuestDuas",
+      "returns": {
+        "type": "object",
+        "value": {
+          "isAuthorized": {
+            "fieldType": {
+              "type": "boolean"
+            },
+            "optional": false
+          },
+          "pendingDuas": {
+            "fieldType": {
+              "type": "array",
+              "value": {
+                "type": "object",
+                "value": {
+                  "_creationTime": {
+                    "fieldType": {
+                      "type": "number"
+                    },
+                    "optional": false
+                  },
+                  "_id": {
+                    "fieldType": {
+                      "tableName": "duas",
+                      "type": "id"
+                    },
+                    "optional": false
+                  },
+                  "createdAt": {
+                    "fieldType": {
+                      "type": "number"
+                    },
+                    "optional": false
+                  },
+                  "isAnonymous": {
+                    "fieldType": {
+                      "type": "boolean"
+                    },
+                    "optional": false
+                  },
+                  "moderationReasons": {
+                    "fieldType": {
+                      "type": "array",
+                      "value": {
+                        "type": "string"
+                      }
+                    },
+                    "optional": false
+                  },
+                  "name": {
+                    "fieldType": {
+                      "type": "string"
+                    },
+                    "optional": true
+                  },
+                  "text": {
+                    "fieldType": {
+                      "type": "string"
+                    },
+                    "optional": false
+                  }
+                }
+              }
+            },
+            "optional": false
+          }
+        }
+      },
+      "visibility": {
+        "kind": "public"
+      }
+    },
+    {
+      "args": {
+        "type": "object",
+        "value": {}
+      },
+      "functionType": "Query",
+      "identifier": "adminModeration.js:getAdminStats",
+      "returns": {
+        "type": "object",
+        "value": {
+          "isAuthorized": {
+            "fieldType": {
+              "type": "boolean"
+            },
+            "optional": false
+          },
+          "pendingModerationCount": {
+            "fieldType": {
+              "type": "number"
+            },
+            "optional": true
+          },
+          "reportedDuasCount": {
+            "fieldType": {
+              "type": "number"
+            },
+            "optional": true
+          },
+          "totalAmeens": {
+            "fieldType": {
+              "type": "number"
+            },
+            "optional": true
+          },
+          "totalDuas": {
+            "fieldType": {
+              "type": "number"
+            },
+            "optional": true
+          },
+          "totalGroups": {
+            "fieldType": {
+              "type": "number"
+            },
+            "optional": true
+          },
+          "totalUsers": {
+            "fieldType": {
+              "type": "number"
+            },
+            "optional": true
+          }
+        }
+      },
+      "visibility": {
+        "kind": "public"
+      }
+    },
+    {
+      "args": {
+        "type": "object",
+        "value": {
+          "paginationOpts": {
+            "fieldType": {
+              "type": "object",
+              "value": {
+                "cursor": {
+                  "fieldType": {
+                    "type": "union",
+                    "value": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "optional": false
+                },
+                "endCursor": {
+                  "fieldType": {
+                    "type": "union",
+                    "value": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "optional": true
+                },
+                "id": {
+                  "fieldType": {
+                    "type": "number"
+                  },
+                  "optional": true
+                },
+                "maximumBytesRead": {
+                  "fieldType": {
+                    "type": "number"
+                  },
+                  "optional": true
+                },
+                "maximumRowsRead": {
+                  "fieldType": {
+                    "type": "number"
+                  },
+                  "optional": true
+                },
+                "numItems": {
+                  "fieldType": {
+                    "type": "number"
+                  },
+                  "optional": false
+                }
+              }
+            },
+            "optional": false
+          }
+        }
+      },
+      "functionType": "Query",
+      "identifier": "adminModeration.js:listAllUsers",
+      "returns": {
+        "type": "object",
+        "value": {
+          "continueCursor": {
+            "fieldType": {
+              "type": "string"
+            },
+            "optional": false
+          },
+          "isDone": {
+            "fieldType": {
+              "type": "boolean"
+            },
+            "optional": false
+          },
+          "page": {
+            "fieldType": {
+              "type": "array",
+              "value": {
+                "type": "object",
+                "value": {
+                  "_creationTime": {
+                    "fieldType": {
+                      "type": "number"
+                    },
+                    "optional": false
+                  },
+                  "_id": {
+                    "fieldType": {
+                      "tableName": "users",
+                      "type": "id"
+                    },
+                    "optional": false
+                  },
+                  "clerkId": {
+                    "fieldType": {
+                      "type": "string"
+                    },
+                    "optional": false
+                  },
+                  "email": {
+                    "fieldType": {
+                      "type": "string"
+                    },
+                    "optional": true
+                  },
+                  "name": {
+                    "fieldType": {
+                      "type": "string"
+                    },
+                    "optional": false
+                  }
+                }
+              }
+            },
+            "optional": false
+          },
+          "pageStatus": {
+            "fieldType": {
+              "type": "union",
+              "value": [
+                {
+                  "type": "literal",
+                  "value": "SplitRecommended"
+                },
+                {
+                  "type": "literal",
+                  "value": "SplitRequired"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "optional": true
+          },
+          "splitCursor": {
+            "fieldType": {
+              "type": "union",
+              "value": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "optional": true
+          }
+        }
+      },
+      "visibility": {
+        "kind": "public"
+      }
+    },
+    {
+      "args": {
+        "type": "object",
+        "value": {
+          "paginationOpts": {
+            "fieldType": {
+              "type": "object",
+              "value": {
+                "cursor": {
+                  "fieldType": {
+                    "type": "union",
+                    "value": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "optional": false
+                },
+                "endCursor": {
+                  "fieldType": {
+                    "type": "union",
+                    "value": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "optional": true
+                },
+                "id": {
+                  "fieldType": {
+                    "type": "number"
+                  },
+                  "optional": true
+                },
+                "maximumBytesRead": {
+                  "fieldType": {
+                    "type": "number"
+                  },
+                  "optional": true
+                },
+                "maximumRowsRead": {
+                  "fieldType": {
+                    "type": "number"
+                  },
+                  "optional": true
+                },
+                "numItems": {
+                  "fieldType": {
+                    "type": "number"
+                  },
+                  "optional": false
+                }
+              }
+            },
+            "optional": false
+          }
+        }
+      },
+      "functionType": "Query",
+      "identifier": "adminModeration.js:listAllPublicDuasForAdmin",
+      "returns": {
+        "type": "object",
+        "value": {
+          "continueCursor": {
+            "fieldType": {
+              "type": "string"
+            },
+            "optional": false
+          },
+          "isDone": {
+            "fieldType": {
+              "type": "boolean"
+            },
+            "optional": false
+          },
+          "page": {
+            "fieldType": {
+              "type": "array",
+              "value": {
+                "type": "object",
+                "value": {
+                  "_creationTime": {
+                    "fieldType": {
+                      "type": "number"
+                    },
+                    "optional": false
+                  },
+                  "_id": {
+                    "fieldType": {
+                      "tableName": "duas",
+                      "type": "id"
+                    },
+                    "optional": false
+                  },
+                  "ameen": {
+                    "fieldType": {
+                      "type": "number"
+                    },
+                    "optional": false
+                  },
+                  "authorName": {
+                    "fieldType": {
+                      "type": "string"
+                    },
+                    "optional": true
+                  },
+                  "createdAt": {
+                    "fieldType": {
+                      "type": "number"
+                    },
+                    "optional": false
+                  },
+                  "isAnonymous": {
+                    "fieldType": {
+                      "type": "boolean"
+                    },
+                    "optional": false
+                  },
+                  "isGuest": {
+                    "fieldType": {
+                      "type": "boolean"
+                    },
+                    "optional": false
+                  },
+                  "moderationReasons": {
+                    "fieldType": {
+                      "type": "array",
+                      "value": {
+                        "type": "string"
+                      }
+                    },
+                    "optional": true
+                  },
+                  "moderationStatus": {
+                    "fieldType": {
+                      "type": "union",
+                      "value": [
+                        {
+                          "type": "literal",
+                          "value": "approved"
+                        },
+                        {
+                          "type": "literal",
+                          "value": "pending_review"
+                        },
+                        {
+                          "type": "literal",
+                          "value": "rejected"
+                        }
+                      ]
+                    },
+                    "optional": true
+                  },
+                  "name": {
+                    "fieldType": {
+                      "type": "string"
+                    },
+                    "optional": true
+                  },
+                  "text": {
+                    "fieldType": {
+                      "type": "string"
+                    },
+                    "optional": false
+                  }
+                }
+              }
+            },
+            "optional": false
+          },
+          "pageStatus": {
+            "fieldType": {
+              "type": "union",
+              "value": [
+                {
+                  "type": "literal",
+                  "value": "SplitRecommended"
+                },
+                {
+                  "type": "literal",
+                  "value": "SplitRequired"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "optional": true
+          },
+          "splitCursor": {
+            "fieldType": {
+              "type": "union",
+              "value": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "optional": true
+          }
+        }
+      },
+      "visibility": {
+        "kind": "public"
+      }
+    },
+    {
+      "args": {
+        "type": "object",
+        "value": {}
+      },
+      "functionType": "Query",
+      "identifier": "adminModeration.js:listReportedDuas",
+      "returns": {
+        "type": "object",
+        "value": {
+          "isAuthorized": {
+            "fieldType": {
+              "type": "boolean"
+            },
+            "optional": false
+          },
+          "reportedDuas": {
+            "fieldType": {
+              "type": "array",
+              "value": {
+                "type": "object",
+                "value": {
+                  "_creationTime": {
+                    "fieldType": {
+                      "type": "number"
+                    },
+                    "optional": false
+                  },
+                  "_id": {
+                    "fieldType": {
+                      "tableName": "duas",
+                      "type": "id"
+                    },
+                    "optional": false
+                  },
+                  "ameen": {
+                    "fieldType": {
+                      "type": "number"
+                    },
+                    "optional": false
+                  },
+                  "authorName": {
+                    "fieldType": {
+                      "type": "string"
+                    },
+                    "optional": true
+                  },
+                  "createdAt": {
+                    "fieldType": {
+                      "type": "number"
+                    },
+                    "optional": false
+                  },
+                  "isAnonymous": {
+                    "fieldType": {
+                      "type": "boolean"
+                    },
+                    "optional": false
+                  },
+                  "isGuest": {
+                    "fieldType": {
+                      "type": "boolean"
+                    },
+                    "optional": false
+                  },
+                  "moderationStatus": {
+                    "fieldType": {
+                      "type": "union",
+                      "value": [
+                        {
+                          "type": "literal",
+                          "value": "approved"
+                        },
+                        {
+                          "type": "literal",
+                          "value": "pending_review"
+                        },
+                        {
+                          "type": "literal",
+                          "value": "rejected"
+                        }
+                      ]
+                    },
+                    "optional": true
+                  },
+                  "name": {
+                    "fieldType": {
+                      "type": "string"
+                    },
+                    "optional": true
+                  },
+                  "reportCount": {
+                    "fieldType": {
+                      "type": "number"
+                    },
+                    "optional": false
+                  },
+                  "reportReasons": {
+                    "fieldType": {
+                      "type": "array",
+                      "value": {
+                        "type": "string"
+                      }
+                    },
+                    "optional": false
+                  },
+                  "text": {
+                    "fieldType": {
+                      "type": "string"
+                    },
+                    "optional": false
+                  }
+                }
+              }
+            },
+            "optional": false
+          }
+        }
+      },
+      "visibility": {
+        "kind": "public"
+      }
+    },
+    {
+      "args": {
+        "type": "object",
+        "value": {}
+      },
+      "functionType": "Query",
+      "identifier": "adminModeration.js:listRecentActivity",
+      "returns": {
+        "type": "object",
+        "value": {
+          "activity": {
+            "fieldType": {
+              "type": "array",
+              "value": {
+                "type": "object",
+                "value": {
+                  "_id": {
+                    "fieldType": {
+                      "tableName": "duas",
+                      "type": "id"
+                    },
+                    "optional": false
+                  },
+                  "isAnonymous": {
+                    "fieldType": {
+                      "type": "boolean"
+                    },
+                    "optional": true
+                  },
+                  "moderatedAt": {
+                    "fieldType": {
+                      "type": "number"
+                    },
+                    "optional": false
+                  },
+                  "moderationStatus": {
+                    "fieldType": {
+                      "type": "union",
+                      "value": [
+                        {
+                          "type": "literal",
+                          "value": "approved"
+                        },
+                        {
+                          "type": "literal",
+                          "value": "rejected"
+                        }
+                      ]
+                    },
+                    "optional": false
+                  },
+                  "name": {
+                    "fieldType": {
+                      "type": "string"
+                    },
+                    "optional": true
+                  },
+                  "text": {
+                    "fieldType": {
+                      "type": "string"
+                    },
+                    "optional": false
+                  }
+                }
+              }
+            },
+            "optional": false
+          },
+          "isAuthorized": {
+            "fieldType": {
+              "type": "boolean"
+            },
+            "optional": false
+          }
+        }
+      },
+      "visibility": {
+        "kind": "public"
+      }
+    },
+    {
+      "args": {
+        "type": "object",
+        "value": {
+          "duaId": {
+            "fieldType": {
+              "tableName": "duas",
+              "type": "id"
+            },
+            "optional": false
+          },
+          "text": {
+            "fieldType": {
+              "type": "string"
+            },
+            "optional": false
+          }
+        }
+      },
+      "functionType": "Mutation",
+      "identifier": "adminModeration.js:updatePublicDua",
+      "returns": {
+        "type": "null"
+      },
+      "visibility": {
+        "kind": "public"
+      }
+    },
+    {
+      "args": {
+        "type": "object",
+        "value": {
+          "duaId": {
+            "fieldType": {
+              "tableName": "duas",
+              "type": "id"
+            },
+            "optional": false
+          }
+        }
+      },
+      "functionType": "Mutation",
+      "identifier": "adminModeration.js:approveGuestDua",
+      "returns": {
+        "type": "null"
+      },
+      "visibility": {
+        "kind": "public"
+      }
+    },
+    {
+      "args": {
+        "type": "object",
+        "value": {
+          "duaId": {
+            "fieldType": {
+              "tableName": "duas",
+              "type": "id"
+            },
+            "optional": false
+          }
+        }
+      },
+      "functionType": "Mutation",
+      "identifier": "adminModeration.js:rejectGuestDua",
+      "returns": {
+        "type": "null"
+      },
+      "visibility": {
+        "kind": "public"
+      }
+    },
+    {
+      "args": {
+        "type": "object",
+        "value": {
+          "action": {
+            "fieldType": {
+              "type": "union",
+              "value": [
+                {
+                  "type": "literal",
+                  "value": "dismiss"
+                },
+                {
+                  "type": "literal",
+                  "value": "reject"
+                }
+              ]
+            },
+            "optional": false
+          },
+          "duaId": {
+            "fieldType": {
+              "tableName": "duas",
+              "type": "id"
+            },
+            "optional": false
+          }
+        }
+      },
+      "functionType": "Mutation",
+      "identifier": "adminModeration.js:resolveReportedDua",
+      "returns": {
+        "type": "null"
+      },
+      "visibility": {
+        "kind": "public"
+      }
+    },
+    {
+      "args": {
+        "type": "object",
+        "value": {
+          "userId": {
+            "fieldType": {
+              "tableName": "users",
+              "type": "id"
+            },
+            "optional": false
+          }
+        }
+      },
+      "functionType": "Query",
+      "identifier": "adminModeration.js:_getUserForAdmin",
+      "returns": {
+        "type": "union",
+        "value": [
+          {
+            "type": "object",
+            "value": {
+              "clerkId": {
+                "fieldType": {
+                  "type": "string"
+                },
+                "optional": false
+              }
+            }
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "visibility": {
+        "kind": "internal"
+      }
+    },
+    {
+      "args": {
+        "type": "object",
+        "value": {
+          "clerkId": {
+            "fieldType": {
+              "type": "string"
+            },
+            "optional": false
+          },
+          "userId": {
+            "fieldType": {
+              "tableName": "users",
+              "type": "id"
+            },
+            "optional": false
+          }
+        }
+      },
+      "functionType": "Action",
+      "identifier": "adminModeration.js:deleteUserAndData",
+      "returns": {
+        "type": "null"
+      },
+      "visibility": {
+        "kind": "public"
+      }
+    },
+    {
+      "args": {
+        "type": "object",
+        "value": {
+          "userId": {
+            "fieldType": {
+              "tableName": "users",
+              "type": "id"
+            },
+            "optional": false
+          }
+        }
+      },
+      "functionType": "Mutation",
+      "identifier": "adminModeration.js:_deleteUserConvexData",
+      "returns": {
+        "type": "null"
+      },
+      "visibility": {
+        "kind": "internal"
+      }
+    }
+  ]
+}

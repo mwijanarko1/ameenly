@@ -47,6 +47,13 @@ export function SwipeCardDeck({
   const rafRef = useRef<number | null>(null);
 
   const totalCards = children.length;
+  const activeIndex = totalCards > 0 ? Math.min(currentIndex, totalCards - 1) : 0;
+
+  useEffect(() => {
+    if (activeIndex !== currentIndex) {
+      onCardChange?.(activeIndex);
+    }
+  }, [activeIndex, currentIndex, onCardChange]);
 
   const goToCard = useCallback(
     (index: number) => {
@@ -62,7 +69,7 @@ export function SwipeCardDeck({
     (direction: SwipeDirection, targetIndex: number) => {
       setIsAnimating(true);
       setExitDirection(direction);
-      onSwipe?.(direction, currentIndex);
+      onSwipe?.(direction, activeIndex);
 
       setTimeout(() => {
         setCurrentIndex(targetIndex);
@@ -72,7 +79,7 @@ export function SwipeCardDeck({
         onCardChange?.(targetIndex);
       }, SPRING_DURATION);
     },
-    [currentIndex, onSwipe, onCardChange]
+    [activeIndex, onSwipe, onCardChange]
   );
 
   const snapBack = useCallback(() => {
@@ -121,10 +128,10 @@ export function SwipeCardDeck({
     ) {
       const direction = currentXRef.current > 0 ? "right" : "left";
 
-      if (direction === "left" && currentIndex < totalCards - 1) {
-        animateSwipe("left", Math.min(currentIndex + 1, totalCards - 1));
-      } else if (direction === "right" && currentIndex > 0) {
-        animateSwipe("right", Math.max(currentIndex - 1, 0));
+      if (direction === "left" && activeIndex < totalCards - 1) {
+        animateSwipe("left", Math.min(activeIndex + 1, totalCards - 1));
+      } else if (direction === "right" && activeIndex > 0) {
+        animateSwipe("right", Math.max(activeIndex - 1, 0));
       } else {
         snapBack();
       }
@@ -133,7 +140,7 @@ export function SwipeCardDeck({
     }
   }, [
     isDragging,
-    currentIndex,
+    activeIndex,
     totalCards,
     animateSwipe,
     snapBack,
@@ -191,17 +198,17 @@ export function SwipeCardDeck({
   /* Keyboard navigation */
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      if (e.key === "ArrowLeft" && currentIndex > 0) {
-        goToCard(currentIndex - 1);
-      } else if (e.key === "ArrowRight" && currentIndex < totalCards - 1) {
-        goToCard(currentIndex + 1);
+      if (e.key === "ArrowLeft" && activeIndex > 0) {
+        goToCard(activeIndex - 1);
+      } else if (e.key === "ArrowRight" && activeIndex < totalCards - 1) {
+        goToCard(activeIndex + 1);
       }
     },
-    [currentIndex, totalCards, goToCard]
+    [activeIndex, totalCards, goToCard]
   );
 
   function getCardStyle(index: number) {
-    const offset = index - currentIndex;
+    const offset = index - activeIndex;
     const isActive = offset === 0;
     const nextCardProgress =
       exitDirection === "left"
@@ -297,8 +304,8 @@ export function SwipeCardDeck({
 
   /* Only render nearby cards for performance */
   const visibleRange = {
-    start: Math.max(currentIndex - 1, 0),
-    end: Math.min(currentIndex + 3, totalCards),
+    start: Math.max(activeIndex - 1, 0),
+    end: Math.min(activeIndex + 3, totalCards),
   };
 
   return (
@@ -325,7 +332,7 @@ export function SwipeCardDeck({
                 key={actualIndex}
                 className="swipe-card"
                 style={getCardStyle(actualIndex)}
-                aria-hidden={actualIndex !== currentIndex}
+                aria-hidden={actualIndex !== activeIndex}
                 aria-label={`Card ${actualIndex + 1} of ${totalCards}`}
               >
                 {children[actualIndex]}
@@ -344,8 +351,8 @@ export function SwipeCardDeck({
               : Math.round((i / 11) * (totalCards - 1));
           const activeDotIndex =
             totalCards <= 12
-              ? currentIndex
-              : Math.round((currentIndex * 11) / Math.max(totalCards - 1, 1));
+              ? activeIndex
+              : Math.round((activeIndex * 11) / Math.max(totalCards - 1, 1));
           const isActive = i === activeDotIndex;
           return (
             <button
@@ -366,8 +373,8 @@ export function SwipeCardDeck({
         <button
           type="button"
           className="swipe-nav-arrow prev"
-          onClick={() => goToCard(currentIndex - 1)}
-          disabled={currentIndex === 0}
+          onClick={() => goToCard(activeIndex - 1)}
+          disabled={activeIndex === 0}
           aria-label="Previous card"
         >
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -377,8 +384,8 @@ export function SwipeCardDeck({
         <button
           type="button"
           className="swipe-nav-arrow next"
-          onClick={() => goToCard(currentIndex + 1)}
-          disabled={currentIndex === totalCards - 1}
+          onClick={() => goToCard(activeIndex + 1)}
+          disabled={activeIndex === totalCards - 1}
           aria-label="Next card"
         >
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -388,7 +395,7 @@ export function SwipeCardDeck({
       </div>
 
       <p className="swipe-counter">
-        {currentIndex + 1} / {totalCards}
+        {activeIndex + 1} / {totalCards}
       </p>
     </div>
   );

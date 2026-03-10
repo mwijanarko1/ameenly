@@ -77,4 +77,40 @@ describe("SwipeCardDeck", () => {
       "false"
     );
   });
+
+  it("clamps to the last available card after the list shrinks", () => {
+    const { rerender } = render(
+      <SwipeCardDeck>
+        {[
+          <div key="card-1">Card 1</div>,
+          <div key="card-2">Card 2</div>,
+          <div key="card-3">Card 3</div>,
+        ]}
+      </SwipeCardDeck>
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /next card/i }));
+    fireEvent.click(screen.getByRole("button", { name: /next card/i }));
+
+    expect(screen.getByText("Card 3").closest(".swipe-card")).toHaveAttribute(
+      "aria-hidden",
+      "false"
+    );
+
+    act(() => {
+      rerender(
+        <SwipeCardDeck>
+          {[
+            <div key="card-1">Card 1</div>,
+            <div key="card-2">Card 2</div>,
+          ]}
+        </SwipeCardDeck>
+      );
+    });
+
+    expect(screen.getByText("Card 2").closest(".swipe-card")).toHaveAttribute(
+      "aria-hidden",
+      "false"
+    );
+  });
 });
