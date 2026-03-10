@@ -168,9 +168,6 @@ export function DuaCard({ dua, onDelete, canDelete, canReport }: DuaCardProps) {
             Say Ameen
           </Link>
         )}
-        <span className="ameen-count">
-          {dua.ameen} {dua.ameen === 1 ? "Ameen" : "Ameens"}
-        </span>
       </div>
       {(ameenError || reportError) ? (
         <p

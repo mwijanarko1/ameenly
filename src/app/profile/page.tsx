@@ -17,6 +17,8 @@ import { buildAuthHref } from "@/lib/authRedirect";
 import { getDuaDisplayName } from "@/lib/duaDisplay";
 import { sanitizeErrorMessage } from "@/lib/errorMessage";
 import { LegalLinks } from "@/components/LegalLinks";
+import { SwipeCardDeck } from "@/components/SwipeCardDeck";
+import { DuaCardSlide } from "@/components/DuaCardSlide";
 
 function formatTimeAgo(timestamp: number) {
   const diff = Date.now() - timestamp;
@@ -175,6 +177,7 @@ function SignedInProfile() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [ameenDeckIndex, setAmeenDeckIndex] = useState(0);
   const displayNameInputRef = useRef<HTMLInputElement>(null);
   const result = usePaginatedQuery(
     api.duas.listMyDuas,
@@ -189,7 +192,23 @@ function SignedInProfile() {
 
   const duas = result.results as ProfileDua[];
   const ameenDuas = ameenResult.results as AmeenDua[];
+  const ameenCanLoadMore = ameenResult.status === "CanLoadMore";
+  const ameenLoadMore = ameenResult.loadMore;
   const { isAdmin } = useQuery(api.adminModeration.isSiteAdmin) ?? { isAdmin: false };
+
+  const ameenCards = ameenDuas.map((dua) => (
+    <DuaCardSlide
+      key={dua._id}
+      dua={{ ...dua, hasCurrentUserSaidAmeen: true }}
+      canReport={dua.visibility === "public"}
+    />
+  ));
+
+  useEffect(() => {
+    if (!ameenCanLoadMore) return;
+    if (ameenDeckIndex < Math.max(ameenCards.length - 3, 0)) return;
+    ameenLoadMore(10);
+  }, [ameenCanLoadMore, ameenCards.length, ameenDeckIndex, ameenLoadMore]);
 
   const displayName =
     [user?.firstName, user?.lastName].filter(Boolean).join(" ").trim() ||
@@ -531,9 +550,6 @@ function SignedInProfile() {
                       >
                         {dua.text}
                       </p>
-                      <p style={{ fontSize: "0.72rem", color: "var(--text-secondary)", marginTop: "6px" }}>
-                        {dua.ameen} {dua.ameen === 1 ? "Ameen" : "Ameens"}
-                      </p>
                     </div>
                   );
                 })}
@@ -570,59 +586,16 @@ function SignedInProfile() {
                 </Link>
               </div>
             ) : (
-              <>
-                {ameenDuas.map((dua, i) => {
-                  const displayName = getDuaDisplayName(dua);
-                  return (
-                    <div
-                      key={dua._id}
-                      style={{
-                        padding: "12px 16px",
-                        borderTop: i === 0 ? "none" : "1px solid var(--border-subtle)",
-                      }}
-                    >
-                      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: "8px", marginBottom: "4px" }}>
-                        {displayName ? (
-                          <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--text-accent)" }}>
-                            {displayName}
-                          </span>
-                        ) : null}
-                        <span style={{ fontSize: "0.72rem", color: "var(--text-secondary)", flexShrink: 0 }}>
-                          {formatTimeAgo(dua.createdAt)}
-                        </span>
-                      </div>
-                      <p
-                        style={{
-                          fontSize: "0.875rem",
-                          color: "var(--text-primary)",
-                          lineHeight: 1.5,
-                          display: "-webkit-box",
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: "vertical",
-                          overflow: "hidden",
-                        }}
-                      >
-                        {dua.text}
-                      </p>
-                      <p style={{ fontSize: "0.72rem", color: "var(--text-secondary)", marginTop: "6px" }}>
-                        {dua.ameen} {dua.ameen === 1 ? "Ameen" : "Ameens"}
-                      </p>
-                    </div>
-                  );
-                })}
-                {ameenResult.status === "CanLoadMore" && (
-                  <div style={{ padding: "12px 16px", borderTop: "1px solid var(--border-subtle)", textAlign: "center" }}>
-                    <button type="button" onClick={() => ameenResult.loadMore(10)} className="btn-ameen">
-                      Load More
-                    </button>
-                  </div>
-                )}
+              <div className="profile-ameen-deck dua-deck-wrapper">
+                <SwipeCardDeck onCardChange={setAmeenDeckIndex}>
+                  {ameenCards}
+                </SwipeCardDeck>
                 {ameenResult.status === "LoadingMore" && (
-                  <p style={{ padding: "12px 16px", textAlign: "center", color: "var(--text-secondary)", fontSize: "0.8rem" }}>
+                  <p style={{ padding: "12px 16px", textAlign: "center", color: "var(--text-secondary)", fontSize: "0.8rem", margin: 0 }}>
                     Loading…
                   </p>
                 )}
-              </>
+              </div>
             )}
           </>
         )}

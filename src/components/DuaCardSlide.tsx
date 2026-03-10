@@ -160,10 +160,6 @@ export function DuaCardSlide({ dua, canReport }: DuaCardSlideProps) {
                         Say Ameen
                     </Link>
                 )}
-                
-                <p className="ameen-count-text">
-                    {dua.ameen} {dua.ameen === 1 ? "Ameen" : "Ameens"}
-                </p>
 
                 {(ameenError || reportError) ? (
                     <p

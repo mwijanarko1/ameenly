@@ -2227,6 +2227,32 @@ code {
   margin-bottom: 20px;
 }
 
+.profile-ameen-deck {
+  min-height: calc(var(--standard-card-height) + 80px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 10px 40px;
+}
+
+.profile-ameen-deck .swipe-deck-container {
+  min-height: 70dvh;
+}
+
+.profile-ameen-deck .swipe-deck-stack {
+  height: var(--standard-card-height);
+}
+
+@media (min-width: 768px) {
+  .profile-ameen-deck {
+    padding: 20px 24px 60px;
+  }
+
+  .profile-ameen-deck .swipe-deck-container {
+    min-height: 80dvh;
+  }
+}
+
 .profile-legal-section {
   width: 100%;
   border-radius: 16px;
